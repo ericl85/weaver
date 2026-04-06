@@ -130,7 +130,7 @@ Wire up project open/create and chapter navigation. No editor persistence yet.
 
 ---
 
-- [ ] **T-008 — Create ProjectContext**
+- [x] **T-008 — Create ProjectContext**
   - **Goal**: React context that holds active project state, chapter list, and selected chapter.
   - **Files to create**: `src/contexts/ProjectContext.tsx`
   - **State**: `project: Project | null`, `chapters: Chapter[]`, `activeChapter: Chapter | null`, `setActiveChapter`, `refreshChapters`
@@ -139,7 +139,7 @@ Wire up project open/create and chapter navigation. No editor persistence yet.
 
 ---
 
-- [ ] **T-009 — Build Welcome / Project Open screen**
+- [x] **T-009 — Build Welcome / Project Open screen**
   - **Goal**: When no project is open, show a welcome screen with "New Project" and "Open Project" buttons.
   - **Files to create**: `src/components/WelcomeScreen.tsx`
   - **Files to modify**: `src/App.tsx` (conditionally render WelcomeScreen vs. main layout)

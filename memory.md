@@ -73,7 +73,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Area | Status | Notes |
 |------|--------|-------|
 | Editor ↔ file persistence | Not started | `onChange` logs to console; no save/load wiring |
-| Project open/create flow | Not started | No initial screen, can't open a project |
+| Project open/create flow | Complete (T-008, T-009) | WelcomeScreen with New/Open, ProjectContext wired |
 | Sidebar panel system | Not started | Placeholder div only |
 | Outline data model | Not started | No schema defined yet |
 | Codex UI | Not started | No UI at all |
