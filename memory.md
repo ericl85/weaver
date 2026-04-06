@@ -74,12 +74,13 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 |------|--------|-------|
 | Editor ↔ file persistence | Not started | `onChange` logs to console; no save/load wiring |
 | Project open/create flow | Complete (T-008, T-009) | WelcomeScreen with New/Open, ProjectContext wired |
+| Left navigation pane | Complete (T-010) | LeftPane with Content/Files toggle; ChapterList (chapters + codex), FileExplorer (dir tree), FileEditor (raw textarea, Ctrl+S) |
 | Sidebar panel system | Not started | Placeholder div only |
 | Outline data model | Not started | No schema defined yet |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Not started | Required before any file I/O can work |
 | Theming UI | Not started | Colors hardcoded in Tailwind classes |
-| Tauri commands | Phase 1 partial — needs rework | chapter CRUD was implemented with filename-prefix ordering (wrong); T-001–T-004 must be redone for manifest-based ordering before T-006/T-007 can proceed |
+| Tauri commands | Phase 1 complete | Manifest-based ordering; all structs use `#[serde(rename_all = "camelCase")]` so IPC JSON matches TypeScript interfaces |
 | Window size | 800×600 | Probably too small; may need updating |
 
 ---

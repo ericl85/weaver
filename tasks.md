@@ -153,7 +153,7 @@ Wire up project open/create and chapter navigation. No editor persistence yet.
 
 ---
 
-- [ ] **T-010 — Build left navigation pane (content view + file view)**
+- [x] **T-010 — Build left navigation pane (content view + file view)**
   - **Goal**: A fixed-width left sidebar that serves as the primary navigation pane. Has two modes toggled by an icon or tab strip at the top.
   - **Files to create**: `src/components/LeftPane.tsx`, `src/components/ChapterList.tsx`, `src/components/FileExplorer.tsx`, `src/components/FileEditor.tsx`
   - **Files to modify**: `src/App.tsx` — update from 2-pane to **3-pane** layout: `[left nav] [editor] [right tools]`. Left pane and right sidebar are both fixed-width and independently collapsible; editor takes `flex-1`.

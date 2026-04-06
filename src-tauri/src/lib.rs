@@ -4,6 +4,7 @@ use std::path::Path;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: String,
     pub title: String,
@@ -15,6 +16,7 @@ pub struct Project {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Chapter {
     pub id: String,
     pub title: String,
@@ -40,6 +42,7 @@ pub enum OutlineItemType {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct OutlineItem {
     pub id: String,
     pub chapter_id: String,
@@ -50,6 +53,7 @@ pub struct OutlineItem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Theme {
     pub name: String,
     pub font_family: String,
@@ -58,6 +62,13 @@ pub struct Theme {
     pub background_color: String,
     pub text_color: String,
     pub accent_color: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FileEntry {
+    pub path: String,
+    pub is_dir: bool,
 }
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -326,6 +337,57 @@ fn save_outline(
     fs::rename(&tmp, &dest).map_err(|e| e.to_string())
 }
 
+// --- Raw file commands ---
+
+fn collect_file_entries(root: &Path, dir: &Path, entries: &mut Vec<FileEntry>) -> Result<(), String> {
+    let mut items: Vec<_> = fs::read_dir(dir)
+        .map_err(|e| e.to_string())?
+        .flatten()
+        .collect();
+    items.sort_by(|a, b| {
+        let a_is_dir = a.file_type().map(|t| t.is_dir()).unwrap_or(false);
+        let b_is_dir = b.file_type().map(|t| t.is_dir()).unwrap_or(false);
+        b_is_dir.cmp(&a_is_dir).then(a.file_name().cmp(&b.file_name()))
+    });
+    for entry in items {
+        let path = entry.path();
+        let rel = path.strip_prefix(root).map_err(|e| e.to_string())?;
+        let rel_str = rel.to_string_lossy().replace('\\', "/");
+        let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+        entries.push(FileEntry { path: rel_str, is_dir });
+        if is_dir {
+            collect_file_entries(root, &path, entries)?;
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn list_project_files(project_path: String) -> Result<Vec<FileEntry>, String> {
+    let root = Path::new(&project_path);
+    let mut entries = Vec::new();
+    collect_file_entries(root, root, &mut entries)?;
+    Ok(entries)
+}
+
+#[tauri::command]
+fn read_raw_file(project_path: String, relative_path: String) -> Result<String, String> {
+    let path = Path::new(&project_path).join(&relative_path);
+    fs::read_to_string(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_raw_file(project_path: String, relative_path: String, content: String) -> Result<(), String> {
+    let path = Path::new(&project_path).join(&relative_path);
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("file");
+    let tmp = path.with_file_name(format!(".{}.tmp", file_name));
+    fs::write(&tmp, content).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, &path).map_err(|e| e.to_string())
+}
+
 // --- Codex CRUD commands ---
 
 #[tauri::command]
@@ -445,6 +507,9 @@ pub fn run() {
             reorder_chapters,
             read_outline,
             save_outline,
+            list_project_files,
+            read_raw_file,
+            save_raw_file,
             list_codex,
             read_codex_entry,
             save_codex_entry,

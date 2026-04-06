@@ -30,6 +30,11 @@ export interface OutlineItem {
   type: 'note' | 'todo' | 'feedback';
 }
 
+export interface FileEntry {
+  path: string;
+  isDir: boolean;
+}
+
 export interface Theme {
   name: string;
   fontFamily: string;

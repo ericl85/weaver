@@ -4,6 +4,7 @@ import type {
   Chapter,
   CodexEntry,
   OutlineItem,
+  FileEntry,
 } from '../types';
 
 // --- Project ---
@@ -76,6 +77,24 @@ export function saveOutline(
   items: OutlineItem[],
 ): Promise<void> {
   return invoke('save_outline', { projectPath, chapterFilename, items });
+}
+
+// --- Raw files ---
+
+export function listProjectFiles(projectPath: string): Promise<FileEntry[]> {
+  return invoke('list_project_files', { projectPath });
+}
+
+export function readRawFile(projectPath: string, relativePath: string): Promise<string> {
+  return invoke('read_raw_file', { projectPath, relativePath });
+}
+
+export function saveRawFile(
+  projectPath: string,
+  relativePath: string,
+  content: string,
+): Promise<void> {
+  return invoke('save_raw_file', { projectPath, relativePath, content });
 }
 
 // --- Codex ---
