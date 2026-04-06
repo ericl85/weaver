@@ -10,62 +10,87 @@ These tasks establish the data model and file I/O layer everything else builds o
 
 ---
 
-- [x] **T-001 — Define shared TypeScript types**
+- [x] **T-001 — Define shared TypeScript types** ⚠️ NEEDS REWORK — `Project` is missing the `chapters` manifest field
   - **Goal**: Create a single source-of-truth for all domain types used across frontend and IPC boundary.
-  - **Files to create**: `src/types/index.ts`
+  - **Files to modify**: `src/types/index.ts` (file already exists; update `Project`)
   - **Types to define**:
-    - `Project { id, title, author, created: string, rootPath: string }`
-    - `Chapter { id, title, filename, order: number, wordCount?: number }`
+    - `Project { id, title, author, created: string, rootPath: string, chapters: string[] }` — `chapters` is an **ordered array of chapter filenames** (the manifest). This is the source of truth for chapter order.
+    - `Chapter { id, title, filename, order: number, wordCount?: number }` — `order` is the chapter's index in the manifest (0-based), derived at read time; not stored in the filename.
     - `CodexEntry { id, title, category, filename }`
-    - `OutlineItem { id, chapterId, text, anchorOffset: number, anchorLength: number, type: 'note'|'todo'|'feedback' }`
+    - `OutlineItem { id, chapterId, text, anchorId: string, type: 'note'|'todo'|'feedback' }` — `anchorId` is a UUID that matches a `<!-- weaver-anchor:UUID -->` comment embedded in the chapter's Markdown. No character offsets — the anchor travels with the text.
     - `Theme { name, fontFamily, fontSize, lineHeight, backgroundColor, textColor, accentColor }`
   - **Depends on**: nothing
   - **Fits architecture**: These types are passed across the Tauri IPC boundary (frontend calls Rust commands and receives these shapes). Define them once here; Rust structs mirror them.
 
 ---
 
-- [x] **T-002 — Add Rust structs mirroring TypeScript types**
+- [x] **T-002 — Add Rust structs mirroring TypeScript types** ⚠️ NEEDS REWORK — `Project` struct is missing `chapters: Vec<String>`
   - **Goal**: Define serde-serializable Rust structs for all domain objects, used as Tauri command return types.
-  - **Files to modify**: `src-tauri/src/lib.rs` (or split into `src-tauri/src/types.rs` and mod-include it)
+  - **Files to modify**: `src-tauri/src/lib.rs`
   - **Structs**: `Project`, `Chapter`, `CodexEntry`, `OutlineItem`, `Theme` — all `#[derive(Serialize, Deserialize, Debug)]`
+  - **`Project` must include**: `pub chapters: Vec<String>` — the ordered manifest of chapter filenames.
+  - **`OutlineItem` must use**: `pub anchor_id: String` instead of `anchor_offset`/`anchor_length`.
   - **Depends on**: T-001 (to stay in sync)
   - **Fits architecture**: Tauri commands serialise these structs to JSON; TypeScript deserialises to the types from T-001.
 
 ---
 
-- [ ] **T-003 — Implement Tauri commands: create_project, open_project**
+- [x] **T-003 — Implement Tauri commands: create_project, open_project** ⚠️ NEEDS REWORK — `project.json` must include `chapters: []`; open_project must return it
   - **Goal**: Allow the app to create a new project directory structure on disk, or open an existing one.
   - **Files to modify**: `src-tauri/src/lib.rs`, `src-tauri/Cargo.toml`
-  - **New Cargo dependency**: `uuid` (for generating project IDs)
+  - **Cargo dependencies already added**: `uuid` (v4), `chrono` (with serde feature)
   - **Commands**:
     - `create_project(title: String, author: String, path: String) -> Result<Project, String>`
       - Creates `<path>/<title>/` directory tree: `chapters/`, `codex/characters/`, `codex/places/`, `codex/items/`, `themes/`
-      - Writes `project.json`
-      - Returns `Project`
+      - Writes `project.json` with `chapters: []` (empty manifest — no chapters yet)
+      - Returns `Project` (with `chapters: vec![]`)
     - `open_project(path: String) -> Result<Project, String>`
-      - Reads and parses `project.json` from path
-      - Returns `Project`
+      - Reads and parses `project.json` from path — must deserialize `chapters` array
+      - Returns `Project` including the `chapters` manifest
   - **Depends on**: T-002
   - **Fits architecture**: All file I/O goes through Tauri commands. Frontend uses `invoke('create_project', {...})`.
 
 ---
 
-- [ ] **T-004 — Implement Tauri commands: chapter CRUD**
-  - **Goal**: Create, list, read, and save chapter files.
+- [x] **T-004 — Implement Tauri commands: chapter CRUD** ⚠️ NEEDS REWORK — current implementation encodes order in filename prefix; must be rewritten for manifest-based ordering
+  - **Goal**: Create, list, read, and save chapter files. Order is stored in `project.json`'s `chapters` manifest, not in filenames.
   - **Files to modify**: `src-tauri/src/lib.rs`
+  - **Key design decisions**:
+    - Chapter filenames are `slug.md` (no numeric prefix). Example: `the-dark-forest.md`.
+    - `project.json` contains `"chapters": ["intro.md", "the-dark-forest.md", ...]` — this ordered array is the sole source of truth for chapter order.
+    - The `order` field on `Chapter` is the 0-based index of the filename in the manifest — derived at read time, never persisted on its own.
+    - Any write that changes the manifest (create, delete, rename, reorder) must atomically update `project.json`.
   - **Commands**:
-    - `list_chapters(project_path: String) -> Result<Vec<Chapter>, String>` — scans `chapters/` for `.md` files, returns sorted by numeric prefix
-    - `read_chapter(project_path: String, filename: String) -> Result<String, String>` — returns raw Markdown content
-    - `save_chapter(project_path: String, filename: String, content: String) -> Result<(), String>` — writes content atomically (write to `.tmp`, then rename)
-    - `create_chapter(project_path: String, title: String) -> Result<Chapter, String>` — picks next order number, creates file, returns Chapter
+    - `list_chapters(project_path: String) -> Result<Vec<Chapter>, String>`
+      - Reads `project.json`, iterates `chapters` array in order
+      - For each filename, sets `order` = index, derives title from filename slug (replace `-` with spaces, capitalise first letter)
+      - Skips filenames not found on disk (graceful degradation)
+    - `read_chapter(project_path: String, filename: String) -> Result<String, String>` — unchanged, reads raw Markdown
+    - `save_chapter(project_path: String, filename: String, content: String) -> Result<(), String>` — unchanged, atomic write+rename
+    - `create_chapter(project_path: String, title: String) -> Result<Chapter, String>`
+      - Slugifies title → `slug.md`; if file already exists, append `-2`, `-3`, etc.
+      - Creates empty `.md` file
+      - Appends filename to `chapters` array in `project.json`
+      - Returns `Chapter` with `order` = new last index
     - `rename_chapter(project_path: String, filename: String, new_title: String) -> Result<Chapter, String>`
+      - Renames `.md` file and sidecar `.notes.json` (if present) on disk
+      - Updates the entry in `project.json`'s `chapters` array (old filename → new filename)
+      - Returns updated `Chapter`
     - `delete_chapter(project_path: String, filename: String) -> Result<(), String>`
+      - Deletes `.md` file and sidecar `.notes.json` (if present)
+      - Removes filename from `project.json`'s `chapters` array
+    - `reorder_chapters(project_path: String, filenames: Vec<String>) -> Result<(), String>` ← **new command**
+      - Accepts the full desired chapter order as a list of filenames
+      - Validates that the list contains the same set of filenames currently in the manifest (no additions or removals)
+      - Writes the new order back to `project.json`'s `chapters` array
+  - **Helpers to add**: `read_project_json(path) -> Result<Project, String>`, `write_project_json(path, project) -> Result<(), String>` — used by all commands that touch the manifest
+  - **Helpers to remove**: `chapter_from_filename` (numeric prefix parsing), `next_chapter_order` — these are artifacts of the filename-based approach
   - **Depends on**: T-003
-  - **Fits architecture**: Atomic save (write+rename) prevents data loss on crash.
+  - **Fits architecture**: Atomic save (write+rename) prevents data loss on crash. Manifest in `project.json` makes reordering a first-class operation with no filesystem renames.
 
 ---
 
-- [ ] **T-005 — Implement Tauri commands: codex CRUD**
+- [x] **T-005 — Implement Tauri commands: codex CRUD**
   - **Goal**: Create, list, read, and save codex entries.
   - **Files to modify**: `src-tauri/src/lib.rs`
   - **Commands**:
@@ -79,7 +104,7 @@ These tasks establish the data model and file I/O layer everything else builds o
 
 ---
 
-- [ ] **T-006 — Implement Tauri commands: outline/notes CRUD**
+- [x] **T-006 — Implement Tauri commands: outline/notes CRUD**
   - **Goal**: Read/write the `.notes.json` sidecar files that store outline items anchored to chapter text.
   - **Files to modify**: `src-tauri/src/lib.rs`
   - **Commands**:
@@ -90,7 +115,7 @@ These tasks establish the data model and file I/O layer everything else builds o
 
 ---
 
-- [ ] **T-007 — Create Tauri IPC helper module on the frontend**
+- [x] **T-007 — Create Tauri IPC helper module on the frontend**
   - **Goal**: Wrap all `invoke` calls in typed async functions so components never call `invoke` directly.
   - **Files to create**: `src/lib/tauri.ts`
   - **Exports**: one async function per Tauri command (e.g. `createProject(...)`, `listChapters(...)`, etc.), with full TypeScript types from T-001.
@@ -128,12 +153,22 @@ Wire up project open/create and chapter navigation. No editor persistence yet.
 
 ---
 
-- [ ] **T-010 — Build Chapter List sidebar panel**
-  - **Goal**: Left or right sidebar showing chapters for the open project, with ability to select, create, and rename.
-  - **Files to create**: `src/components/ChapterList.tsx`
-  - **Features**: List chapters in order, click to open, "+" button to create new, right-click (or icon) to rename/delete, current chapter highlighted
-  - **Depends on**: T-008
-  - **Fits architecture**: Uses ProjectContext. Chapter navigation is a sidebar tool, not a top nav bar.
+- [ ] **T-010 — Build left navigation pane (content view + file view)**
+  - **Goal**: A fixed-width left sidebar that serves as the primary navigation pane. Has two modes toggled by an icon or tab strip at the top.
+  - **Files to create**: `src/components/LeftPane.tsx`, `src/components/ChapterList.tsx`, `src/components/FileExplorer.tsx`, `src/components/FileEditor.tsx`
+  - **Files to modify**: `src/App.tsx` — update from 2-pane to **3-pane** layout: `[left nav] [editor] [right tools]`. Left pane and right sidebar are both fixed-width and independently collapsible; editor takes `flex-1`.
+  - **Content view** (default mode):
+    - Lists chapters in manifest order; click to open in editor; "+" creates a new chapter; right-click or icon to rename/delete.
+    - Below chapters: collapsible codex section listing entries by category.
+    - Current chapter highlighted.
+  - **File view** (raw mode):
+    - Renders the project directory tree (`chapters/`, `codex/`, `themes/`, `project.json`, etc.).
+    - Clicking any file opens it in a `FileEditor` — a plain `<textarea>` that replaces the Lexical editor in the center pane for that file.
+    - `FileEditor` saves on Ctrl+S via `save_raw_file` Tauri command (see note below).
+    - This is how users edit metadata files (`project.json`, a future `metadata.yaml`, etc.) without needing a separate settings screen.
+  - **New Tauri commands needed** (add to T-004's scope or implement here): `read_raw_file(project_path, relative_path) -> Result<String, String>`, `save_raw_file(project_path, relative_path, content) -> Result<(), String>`
+  - **Depends on**: T-007, T-008
+  - **Fits architecture**: Left pane is navigation; right sidebar is tools. File view makes the project structure transparent without breaking the writing UX.
 
 ---
 
@@ -146,23 +181,29 @@ Connect the Lexical editor to file I/O.
 - [ ] **T-011 — Add Markdown ↔ Lexical serialization**
   - **Goal**: Convert between raw Markdown strings (stored on disk) and Lexical editor state.
   - **Files to create**: `src/lib/markdown.ts`
-  - **Approach**: Use `@lexical/markdown` with standard `TRANSFORMERS`. Add `@lexical/markdown` as a dependency in `package.json`.
-  - **Exports**: `markdownToEditorState(markdown: string, editor: LexicalEditor): void`, `editorStateToMarkdown(state: EditorState): string`
-  - **Depends on**: nothing (pure utility)
-  - **Note — Open Question**: `@lexical/markdown` handles CommonMark. Pandoc uses some extensions (footnotes, etc.). For now, CommonMark is sufficient; advanced extensions are a future task.
-  - **Fits architecture**: Serialization is isolated in one file. Editor remains Lexical-native.
+  - **Approach**:
+    - Add `@lexical/markdown` as a dependency in `package.json`.
+    - Define a `WEAVER_TRANSFORMERS` constant: `export const WEAVER_TRANSFORMERS = [...TRANSFORMERS]` (re-exports the standard CommonMark set from `@lexical/markdown`). **This array is the extension point** — future Pandoc-specific transformers (footnotes, etc.) are added here without touching anything else.
+    - All serialization in this file uses `WEAVER_TRANSFORMERS`, never `TRANSFORMERS` directly.
+    - Include a custom `AnchorTransformer` in `WEAVER_TRANSFORMERS` that handles `<!-- weaver-anchor:UUID -->` comments: on import, creates an invisible `AnchorNode`; on export, serializes back to the comment. (See T-014 for the `AnchorNode` definition.)
+  - **Exports**: `markdownToEditorState(markdown: string, editor: LexicalEditor): void`, `editorStateToMarkdown(state: EditorState): string`, `WEAVER_TRANSFORMERS`
+  - **YAML frontmatter**: not handled here. pandoc-publish uses a separate metadata file, not inline frontmatter — that file is edited via the raw `FileEditor` in the file view (T-010). No frontmatter transformer needed.
+  - **Depends on**: T-014 (for `AnchorNode` and `AnchorTransformer`) — implement T-014's node definition before finalising T-011, or stub the transformer and fill it in during T-014.
+  - **Fits architecture**: All Markdown conversion goes through one file. Adding Pandoc extensions later = add to `WEAVER_TRANSFORMERS`, done.
 
 ---
 
-- [ ] **T-012 — Wire editor to active chapter (load + auto-save)**
-  - **Goal**: When `activeChapter` changes, load its Markdown into the editor. Auto-save on debounce after edits.
+- [ ] **T-012 — Wire editor to active chapter (load + save)**
+  - **Goal**: When `activeChapter` changes, load its Markdown into the editor. Save on debounce and on Ctrl+S.
   - **Files to modify**: `src/Editor.tsx`
   - **Behaviour**:
     - On `activeChapter` change: call `readChapter`, convert Markdown → Lexical, update editor state
-    - On editor change: debounce 1000ms, convert Lexical → Markdown, call `saveChapter`
-    - Show a subtle save indicator (e.g. a dot in the chapter title that clears after save)
-  - **Depends on**: T-007, T-008, T-011
-  - **Fits architecture**: Keeps persistence logic in the editor component. Auto-save is distraction-free (no modal prompts).
+    - On editor change: if auto-save is enabled, debounce 1000ms then convert Lexical → Markdown and call `saveChapter`
+    - Ctrl+S: always triggers an immediate save regardless of auto-save setting
+    - Show a subtle unsaved indicator (e.g. a dot) that clears after save
+  - **Auto-save setting**: read from a settings context/store (see T-019). Default: enabled.
+  - **Depends on**: T-007, T-008, T-011, T-019 (for auto-save toggle)
+  - **Fits architecture**: Auto-save is distraction-free; Ctrl+S gives writers a familiar manual escape hatch.
 
 ---
 
@@ -186,25 +227,32 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-- [ ] **T-014 — Build Outline panel UI**
-  - **Goal**: Show outline items for the active chapter. Allow adding, editing, deleting items.
-  - **Files to create**: `src/components/panels/OutlinePanel.tsx`
-  - **Features**:
+- [ ] **T-014 — Build Outline panel UI + AnchorNode**
+  - **Goal**: Show outline items for the active chapter. Allow adding, editing, deleting items. Define the `AnchorNode` Lexical type used by the anchor system.
+  - **Files to create**: `src/components/panels/OutlinePanel.tsx`, `src/nodes/AnchorNode.tsx`
+  - **AnchorNode** (define first — T-011 depends on it):
+    - A custom Lexical inline decorator node that holds a `anchorId: string` (UUID).
+    - Renders as a zero-width, invisible `<span data-anchor-id="UUID">` in the editor — users never see it.
+    - Serializes to/from `<!-- weaver-anchor:UUID -->` in Markdown via the `AnchorTransformer` registered in `WEAVER_TRANSFORMERS` (T-011).
+    - Moves with surrounding text as the user edits — this is the whole point.
+  - **OutlinePanel features**:
     - List outline items grouped by type (Note, Todo, Feedback)
-    - "Add item" creates a new item anchored to the current cursor position
-    - Click an item → scroll editor to the anchored text range
-    - Item text field is editable inline
+    - "Add item" at cursor: generates a UUID, inserts an `AnchorNode` at the current editor selection, saves the `OutlineItem` to the sidecar `.notes.json`
+    - Click an item → find the `AnchorNode` with matching `anchorId` in the editor and scroll/focus to it
+    - Item text field editable inline; delete removes the item from `.notes.json` and removes the `AnchorNode` from the document
   - **Depends on**: T-006, T-007, T-008, T-013
-  - **Fits architecture**: Uses sidecar `.notes.json` via T-006 commands.
+  - **Fits architecture**: Anchors live in the Markdown file as HTML comments — invisible in pandoc output, stable across edits, no offset fragility.
 
 ---
 
 - [ ] **T-015 — Implement outline ↔ editor position sync**
-  - **Goal**: As the cursor moves in the editor, highlight the relevant outline item. Clicking an outline item scrolls/moves the editor cursor to the anchored position.
+  - **Goal**: As the cursor moves in the editor, highlight the outline item whose `AnchorNode` is nearest behind the cursor. Clicking an outline item scrolls the editor to its anchor.
   - **Files to modify**: `src/Editor.tsx`, `src/components/panels/OutlinePanel.tsx`
-  - **Approach**: Use a Lexical `registerUpdateListener` to track cursor position (offset). Expose a `scrollToOffset(offset: number)` imperative ref from the editor. OutlinePanel calls this on item click.
+  - **Approach**:
+    - **Cursor → outline**: register a Lexical `registerUpdateListener`. On each update, walk the node tree to find all `AnchorNode` instances and their positions. Determine which anchor is closest before the current selection offset. Emit the active `anchorId` via a shared ref or context so `OutlinePanel` can highlight the corresponding item.
+    - **Outline → cursor**: expose a `scrollToAnchor(anchorId: string)` imperative function from the editor (via `useImperativeHandle` or a ref callback). `OutlinePanel` calls this on item click. The function queries the editor state for the `AnchorNode` with the matching key, then calls `node.selectEnd()` and scrolls the DOM node into view.
   - **Depends on**: T-014
-  - **Fits architecture**: Lexical plugin/listener pattern for tracking selection state.
+  - **Fits architecture**: Standard Lexical listener/query pattern. No character offsets anywhere in this implementation.
 
 ---
 
@@ -217,11 +265,12 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
   - **Files to create**: `src/components/panels/CodexPanel.tsx`
   - **Features**:
     - Category tabs or collapsible groups (Characters, Places, Items, + custom)
-    - Entry list, click to open in an inline editor within the panel
+    - Entry list; click an entry to open it in an inline editor within the panel
     - "New entry" creates a file via T-005 commands
-    - Entry content editable (plain textarea or small Lexical instance — keep it simple)
-  - **Depends on**: T-005, T-007, T-008, T-013
-  - **Fits architecture**: Uses codex CRUD commands from Phase 1.
+    - Entry content editable via a **full Lexical editor instance** (same `RichTextPlugin` + `HistoryPlugin` setup as the chapter editor, with the same Markdown ↔ Lexical serialization from T-011). Writers may want bold/italic/etc. in reference notes.
+    - Save on the same pattern as chapters: Ctrl+S + auto-save if enabled
+  - **Depends on**: T-005, T-007, T-008, T-011, T-013
+  - **Fits architecture**: Reuses the Lexical + Markdown serialization layer. The codex editor is a second Lexical composer instance scoped to the sidebar — it does not share state with the chapter editor.
 
 ---
 
@@ -254,13 +303,14 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-- [ ] **T-019 — Define Theme data model and defaults**
-  - **Goal**: Theme config type is already in T-001. Create default theme values and a ThemeContext.
-  - **Files to create**: `src/contexts/ThemeContext.tsx`, `src/lib/themes.ts`
-  - **Exports**: `DEFAULT_THEME: Theme`, `applyTheme(theme: Theme): void` (sets CSS custom properties), `ThemeContext`, `ThemeProvider`
+- [ ] **T-019 — Define Theme data model, defaults, and app settings**
+  - **Goal**: Theme config type is already in T-001. Create default theme values, a ThemeContext, and a lightweight app settings store for non-theme preferences (starting with auto-save toggle).
+  - **Files to create**: `src/contexts/ThemeContext.tsx`, `src/lib/themes.ts`, `src/contexts/SettingsContext.tsx`
+  - **ThemeContext exports**: `DEFAULT_THEME: Theme`, `applyTheme(theme: Theme): void` (sets CSS custom properties), `ThemeContext`, `ThemeProvider`
+  - **SettingsContext exports**: `SettingsContext`, `SettingsProvider`, `useSettings()` — initial settings shape: `{ autoSave: boolean }`. Persisted to `localStorage` (no project dependency; these are per-device preferences).
   - **Approach**: Theme values are applied as CSS custom properties on `:root`. Tailwind classes reference these vars where needed.
   - **Depends on**: T-001
-  - **Fits architecture**: CSS custom properties decouple theming from Tailwind utility regeneration.
+  - **Fits architecture**: CSS custom properties decouple theming from Tailwind utility regeneration. Settings are intentionally separate from `Project` — they are user preferences, not project data.
 
 ---
 
@@ -325,8 +375,8 @@ _No AI features are built yet. This phase ensures the sidebar and data access pa
 
 | # | Issue | Affects | Decision needed |
 |---|-------|---------|-----------------|
-| OQ-1 | **Chapter ordering via filename prefix vs. manifest**: Renaming files to reorder is fragile. A `project.json` chapter manifest (ordered array of filenames) is more robust but adds a sync step on every chapter save. | T-004, T-010 | Recommend manifest; confirm before implementing T-004 rename/delete. |
-| OQ-2 | **Lexical Markdown fidelity**: `@lexical/markdown` covers CommonMark. The PRD references pandoc-publish which may use Pandoc-specific extensions (footnotes, YAML frontmatter). If we want full pandoc compatibility, we may need custom Lexical transformers or a pre-processing step. | T-011 | Confirm scope of Markdown support before T-011. |
-| OQ-3 | **Auto-save vs. manual save**: PRD is silent on this. Auto-save on debounce is recommended (distraction-free), but Ctrl+S should also trigger an immediate save. | T-012 | Low risk — implement both; no decision blocker. |
-| OQ-4 | **Codex entry editor**: Should codex entries use a full Lexical editor (with Markdown serialization) or a plain `<textarea>`? Full Lexical is more consistent; textarea is simpler and avoids a second editor instance. | T-016 | Recommend plain textarea for codex; codex entries are reference notes, not prose. |
-| OQ-5 | **Outline anchor strategy**: Storing `anchorOffset: number` (character offset) is fragile — editing text before the anchor shifts all offsets. A better strategy is anchoring to a Lexical node key or a unique string pattern in the text. This is complex. | T-014, T-015 | Decide on anchor strategy before T-006 (changes the `OutlineItem` type). Character offset is acceptable for v1 with a known limitation. |
+| ~~OQ-1~~ | ~~Chapter ordering via filename prefix vs. manifest~~ | — | **Resolved**: manifest wins. Order stored in `project.json`'s `chapters` array. Filenames are plain slugs with no numeric prefix. See T-001, T-003, T-004. |
+| ~~OQ-2~~ | ~~Lexical Markdown fidelity~~ | — | **Resolved**: CommonMark only for now via `WEAVER_TRANSFORMERS` (extension array in `src/lib/markdown.ts`). Future Pandoc transformers added there. YAML frontmatter not needed — pandoc-publish uses a separate metadata file edited via the file view (T-010, T-011). |
+| ~~OQ-3~~ | ~~Auto-save vs. manual save~~ | — | **Resolved**: implement both. Auto-save on 1s debounce + Ctrl+S for immediate save. Add a user setting to disable auto-save. See T-012, T-019. |
+| ~~OQ-4~~ | ~~Codex entry editor~~ | — | **Resolved**: full Lexical editor. Writers may want stylized text in codex entries (bold, italic, etc.) even if they're reference notes. Use the same Markdown ↔ Lexical serialization as chapters. See T-016. |
+| ~~OQ-5~~ | ~~Outline anchor strategy~~ | — | **Resolved**: HTML comment anchors in Markdown (`<!-- weaver-anchor:UUID -->`), represented as invisible `AnchorNode` decorator nodes in Lexical. Survives save/load cycles and text edits. `OutlineItem.anchorId: string` replaces offset fields. See T-001, T-002, T-011, T-014, T-015. |

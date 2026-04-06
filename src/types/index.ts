@@ -4,6 +4,7 @@ export interface Project {
   author: string;
   created: string;
   rootPath: string;
+  chapters: string[];
 }
 
 export interface Chapter {
@@ -25,8 +26,7 @@ export interface OutlineItem {
   id: string;
   chapterId: string;
   text: string;
-  anchorOffset: number;
-  anchorLength: number;
+  anchorId: string;
   type: 'note' | 'todo' | 'feedback';
 }
 
