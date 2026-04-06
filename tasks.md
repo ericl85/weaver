@@ -10,7 +10,7 @@ These tasks establish the data model and file I/O layer everything else builds o
 
 ---
 
-- [ ] **T-001 — Define shared TypeScript types**
+- [x] **T-001 — Define shared TypeScript types**
   - **Goal**: Create a single source-of-truth for all domain types used across frontend and IPC boundary.
   - **Files to create**: `src/types/index.ts`
   - **Types to define**:
@@ -24,7 +24,7 @@ These tasks establish the data model and file I/O layer everything else builds o
 
 ---
 
-- [ ] **T-002 — Add Rust structs mirroring TypeScript types**
+- [x] **T-002 — Add Rust structs mirroring TypeScript types**
   - **Goal**: Define serde-serializable Rust structs for all domain objects, used as Tauri command return types.
   - **Files to modify**: `src-tauri/src/lib.rs` (or split into `src-tauri/src/types.rs` and mod-include it)
   - **Structs**: `Project`, `Chapter`, `CodexEntry`, `OutlineItem`, `Theme` — all `#[derive(Serialize, Deserialize, Debug)]`
