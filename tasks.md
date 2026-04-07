@@ -17,7 +17,7 @@ These tasks establish the data model and file I/O layer everything else builds o
     - `Project { id, title, author, created: string, rootPath: string, chapters: string[] }` — `chapters` is an **ordered array of chapter filenames** (the manifest). This is the source of truth for chapter order.
     - `Chapter { id, title, filename, order: number, wordCount?: number }` — `order` is the chapter's index in the manifest (0-based), derived at read time; not stored in the filename.
     - `CodexEntry { id, title, category, filename }`
-    - `OutlineItem { id, chapterId, text, anchorId: string, type: 'note'|'todo'|'feedback' }` — `anchorId` is a UUID that matches a `<!-- weaver-anchor:UUID -->` comment embedded in the chapter's Markdown. No character offsets — the anchor travels with the text.
+    - `OutlineItem { id, chapterId, text, anchorId: string, type: string }` — `type` is a free-form string (e.g. "Note", "Todo", "Feedback", or anything the user defines). `anchorId` is a UUID matching a `<!-- weaver-anchor:UUID -->` comment in the chapter's Markdown. No character offsets — the anchor travels with the text.
     - `Theme { name, fontFamily, fontSize, lineHeight, backgroundColor, textColor, accentColor }`
   - **Depends on**: nothing
   - **Fits architecture**: These types are passed across the Tauri IPC boundary (frontend calls Rust commands and receives these shapes). Define them once here; Rust structs mirror them.
@@ -29,7 +29,7 @@ These tasks establish the data model and file I/O layer everything else builds o
   - **Files to modify**: `src-tauri/src/lib.rs`
   - **Structs**: `Project`, `Chapter`, `CodexEntry`, `OutlineItem`, `Theme` — all `#[derive(Serialize, Deserialize, Debug)]`
   - **`Project` must include**: `pub chapters: Vec<String>` — the ordered manifest of chapter filenames.
-  - **`OutlineItem` must use**: `pub anchor_id: String` instead of `anchor_offset`/`anchor_length`.
+  - **`OutlineItem` must use**: `pub anchor_id: String` instead of `anchor_offset`/`anchor_length`; `pub item_type: String` (plain string, not an enum — user-defined types must round-trip without a code change).
   - **Depends on**: T-001 (to stay in sync)
   - **Fits architecture**: Tauri commands serialise these structs to JSON; TypeScript deserialises to the types from T-001.
 
@@ -178,7 +178,7 @@ Connect the Lexical editor to file I/O.
 
 ---
 
-- [ ] **T-011 — Add Markdown ↔ Lexical serialization**
+- [x] **T-011 — Add Markdown ↔ Lexical serialization**
   - **Goal**: Convert between raw Markdown strings (stored on disk) and Lexical editor state.
   - **Files to create**: `src/lib/markdown.ts`
   - **Approach**:
@@ -213,7 +213,7 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-- [ ] **T-013 — Build sidebar panel shell**
+- [x] **T-013 — Build sidebar panel shell**
   - **Goal**: Replace the placeholder sidebar div with a panel system: an icon strip on the right edge + a content area that renders the active panel.
   - **Files to create**: `src/components/Sidebar.tsx`, `src/components/SidebarIcon.tsx`
   - **Files to modify**: `src/App.tsx`
@@ -227,7 +227,7 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-- [ ] **T-014 — Build Outline panel UI + AnchorNode**
+- [x] **T-014 — Build Outline panel UI + AnchorNode**
   - **Goal**: Show outline items for the active chapter. Allow adding, editing, deleting items. Define the `AnchorNode` Lexical type used by the anchor system.
   - **Files to create**: `src/components/panels/OutlinePanel.tsx`, `src/nodes/AnchorNode.tsx`
   - **AnchorNode** (define first — T-011 depends on it):
@@ -236,8 +236,8 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
     - Serializes to/from `<!-- weaver-anchor:UUID -->` in Markdown via the `AnchorTransformer` registered in `WEAVER_TRANSFORMERS` (T-011).
     - Moves with surrounding text as the user edits — this is the whole point.
   - **OutlinePanel features**:
-    - List outline items grouped by type (Note, Todo, Feedback)
-    - "Add item" at cursor: generates a UUID, inserts an `AnchorNode` at the current editor selection, saves the `OutlineItem` to the sidecar `.notes.json`
+    - List outline items grouped by type — groups are derived dynamically from the unique `type` strings present in the current chapter's outline items, so user-defined types appear automatically
+    - "Add item" at cursor: generates a UUID, inserts an `AnchorNode` at the current editor selection, saves the `OutlineItem` to the sidecar `.notes.json`; type field is a text input that suggests "Note", "Todo", "Feedback" but accepts any free-form string
     - Click an item → find the `AnchorNode` with matching `anchorId` in the editor and scroll/focus to it
     - Item text field editable inline; delete removes the item from `.notes.json` and removes the `AnchorNode` from the document
   - **Depends on**: T-006, T-007, T-008, T-013

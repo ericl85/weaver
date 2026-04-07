@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { ProjectProvider, useProject } from './contexts/ProjectContext';
+import { EditorProvider } from './contexts/EditorContext';
 import Editor from './Editor';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
 import FileEditor from './components/FileEditor';
+import Sidebar from './components/Sidebar';
 
 function AppShell() {
   const { project, activeChapter } = useProject();
   const [rawFile, setRawFile] = useState<string | null>(null);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   // When an active chapter is selected, close any open raw file
   useEffect(() => {
@@ -59,35 +60,7 @@ function AppShell() {
       </div>
 
       {/* Right sidebar */}
-      {rightCollapsed ? (
-        <div className="w-7 shrink-0 flex flex-col items-center pt-2 bg-zinc-800 border-l border-zinc-700">
-          <button
-            onClick={() => setRightCollapsed(false)}
-            title="Expand panel"
-            className="text-zinc-500 hover:text-zinc-300 text-xs"
-          >
-            ‹
-          </button>
-        </div>
-      ) : (
-        <div className="w-72 shrink-0 bg-zinc-800 border-l border-zinc-700 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700">
-            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-              Tools
-            </h2>
-            <button
-              onClick={() => setRightCollapsed(true)}
-              title="Collapse panel"
-              className="text-zinc-500 hover:text-zinc-300 text-xs"
-            >
-              ›
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
-            Panels coming soon
-          </div>
-        </div>
-      )}
+      <Sidebar />
     </div>
   );
 }
@@ -95,7 +68,9 @@ function AppShell() {
 export default function App() {
   return (
     <ProjectProvider>
-      <AppShell />
+      <EditorProvider>
+        <AppShell />
+      </EditorProvider>
     </ProjectProvider>
   );
 }
