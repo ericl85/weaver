@@ -193,17 +193,66 @@ Connect the Lexical editor to file I/O.
 
 ---
 
-- [ ] **T-012 — Wire editor to active chapter (load + save)**
-  - **Goal**: When `activeChapter` changes, load its Markdown into the editor. Save on debounce and on Ctrl+S.
-  - **Files to modify**: `src/Editor.tsx`
-  - **Behaviour**:
-    - On `activeChapter` change: call `readChapter`, convert Markdown → Lexical, update editor state
-    - On editor change: if auto-save is enabled, debounce 1000ms then convert Lexical → Markdown and call `saveChapter`
-    - Ctrl+S: always triggers an immediate save regardless of auto-save setting
-    - Show a subtle unsaved indicator (e.g. a dot) that clears after save
-  - **Auto-save setting**: read from a settings context/store (see T-019). Default: enabled.
-  - **Depends on**: T-007, T-008, T-011, T-019 (for auto-save toggle)
-  - **Fits architecture**: Auto-save is distraction-free; Ctrl+S gives writers a familiar manual escape hatch.
+- [x] **T-012 — Multi-instance chapter editor (ChapterStackManager)**
+  - **Goal**: Replace the single shared `Editor` with a stack of independent per-chapter editor instances. Each instance is permanently bound to one chapter file. Save logic lives in the parent (`ChapterStackManager`), not inside the editor. A file overwrite caused by stale component state is architecturally impossible.
+  - **Files to create**: `src/components/ChapterStackManager.tsx`, `src/components/ChapterEditorLayer.tsx`
+  - **Files to modify**: `src/Editor.tsx` (simplify — strip all save/load/chapter logic), `src/App.tsx` (replace `<Editor />` with `<ChapterStackManager />`)
+
+  ### Editor.tsx — simplified to a pure editing surface
+  - **Props**: `initialContent: string`, `onContentChange: (markdown: string) => void`
+  - An `InitialContentPlugin` (defined in this file) runs `markdownToEditorState(initialContent, editor)` in a `useEffect` with empty deps — fires exactly once at mount, never again.
+  - To prevent the initial load from triggering dirty state: use a `mountedRef` boolean in `InitialContentPlugin` that is `false` for the first `onContentChange` call (which comes from the mount load), then `true` for all subsequent ones. Pass `isMounted` up alongside the markdown so `ChapterStackManager` can ignore the first emission.
+  - **Alternative**: use `OnChangePlugin`'s `onChange` callback which receives `{ tags }` — skip calls where `tags` contains a load tag. Either approach is fine; implementer's choice.
+  - `EditorRefPlugin` stays — still sets the editor in `EditorContext` for `OutlinePanel`.
+  - No Ctrl+S handler. No save calls. No project/chapter context imports.
+
+  ### ChapterEditorLayer.tsx — one-to-one wrapper per chapter
+  - **Props**: `chapter: Chapter`, `initialContent: string`, `visible: boolean`, `onContentChange: (markdown: string) => void`
+  - Renders `<Editor initialContent={initialContent} onContentChange={onContentChange} />`
+  - Visibility: wrap in a `<div className={visible ? 'contents' : 'hidden'}>`. `hidden` = `display:none` — the editor stays mounted and keeps all Lexical state (including undo history), it just isn't painted.
+  - `chapter.filename` is used as the `key` by `ChapterStackManager` — never changes for this instance.
+
+  ### ChapterStackManager.tsx — owns all open editors and save logic
+  - **State**:
+    - `openChapters: { chapter: Chapter, initialContent: string }[]` — append-only during a session; items are removed only when explicitly closed
+    - `activeFilename: string | null`
+    - `loadingFilenames: Set<string>` — prevents double-loading the same chapter
+  - **Refs** (not state — must not trigger re-renders):
+    - `latestContent: Map<string, string>` — updated on every `onContentChange` from any layer; initialized to `initialContent` when a layer is pushed
+    - `saveTimers: Map<string, ReturnType<typeof setTimeout>>` — one debounce timer per open chapter
+
+  - **`openChapter(chapter)`** (called from a `useEffect` watching `ProjectContext.activeChapter`):
+    1. If `activeFilename === chapter.filename`: no-op (already active)
+    2. If in `openChapters`: set `activeFilename = chapter.filename`, done
+    3. If in `loadingFilenames`: no-op (load already in progress)
+    4. Otherwise: add to `loadingFilenames`, call `readChapter(project.rootPath, chapter.filename)`, on success:
+       - Initialize `latestContent.set(filename, content)`
+       - Append `{ chapter, initialContent: content }` to `openChapters`
+       - Set `activeFilename = filename`
+       - Remove from `loadingFilenames`
+
+  - **`onContentChange(filename, markdown)`** (called by each layer):
+    - Update `latestContent.set(filename, markdown)`
+    - Mark `filename` as dirty (a `Set<string>` in state for the UI indicator)
+    - Reset that chapter's debounce timer: clear existing, set new 1s timer that calls `flush(filename)`
+
+  - **`flush(filename)`**: calls `saveChapter(project.rootPath, filename, latestContent.get(filename))`, on success marks `filename` clean
+
+  - **Ctrl+S**: `onKeyDown` on the outer wrapper `<div>` — when `ctrlKey/metaKey + S`: prevent default, clear `saveTimers.get(activeFilename)`, call `flush(activeFilename)` immediately
+
+  - **Close a chapter**: clear its debounce timer, flush synchronously (fire-and-forget), remove from `openChapters`; if it was active, activate the next/previous open chapter
+
+  - **Renders**: all `ChapterEditorLayer` instances stacked with `position: absolute, inset-0`. Active one has `visible={true}`; others have `visible={false}`. When `openChapters` is empty, render a placeholder ("Open a chapter to start writing").
+
+  - **Dirty indicator**: the dirty `Set<string>` can be used to show a dot on the chapter name in the `ChapterList` (pass via context or callback) — implement the indicator if easy, defer if not.
+
+  ### Why this is safe
+  - `latestContent.get(filename)` and `filename` are always the same key — they cannot refer to different chapters.
+  - No component ever reads `editor.getEditorState()` directly for saving; content always arrives via the `onContentChange` callback after Lexical has applied it.
+  - Switching chapters never modifies an existing editor instance's state. It only changes which one is visible.
+
+  - **Depends on**: T-007, T-008, T-011
+  - **Auto-save setting** (T-019): when `SettingsContext` is implemented, read `autoSave` in `ChapterStackManager` and skip scheduling the debounce timer if disabled. Ctrl+S always works regardless.
 
 ---
 
@@ -373,10 +422,10 @@ _No AI features are built yet. This phase ensures the sidebar and data access pa
 
 > Address these before implementing the affected tasks.
 
-| # | Issue | Affects | Decision needed |
-|---|-------|---------|-----------------|
-| ~~OQ-1~~ | ~~Chapter ordering via filename prefix vs. manifest~~ | — | **Resolved**: manifest wins. Order stored in `project.json`'s `chapters` array. Filenames are plain slugs with no numeric prefix. See T-001, T-003, T-004. |
-| ~~OQ-2~~ | ~~Lexical Markdown fidelity~~ | — | **Resolved**: CommonMark only for now via `WEAVER_TRANSFORMERS` (extension array in `src/lib/markdown.ts`). Future Pandoc transformers added there. YAML frontmatter not needed — pandoc-publish uses a separate metadata file edited via the file view (T-010, T-011). |
-| ~~OQ-3~~ | ~~Auto-save vs. manual save~~ | — | **Resolved**: implement both. Auto-save on 1s debounce + Ctrl+S for immediate save. Add a user setting to disable auto-save. See T-012, T-019. |
-| ~~OQ-4~~ | ~~Codex entry editor~~ | — | **Resolved**: full Lexical editor. Writers may want stylized text in codex entries (bold, italic, etc.) even if they're reference notes. Use the same Markdown ↔ Lexical serialization as chapters. See T-016. |
-| ~~OQ-5~~ | ~~Outline anchor strategy~~ | — | **Resolved**: HTML comment anchors in Markdown (`<!-- weaver-anchor:UUID -->`), represented as invisible `AnchorNode` decorator nodes in Lexical. Survives save/load cycles and text edits. `OutlineItem.anchorId: string` replaces offset fields. See T-001, T-002, T-011, T-014, T-015. |
+| #        | Issue                                                 | Affects | Decision needed                                                                                                                                                                                                                                                                           |
+| -------- | ----------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~OQ-1~~ | ~~Chapter ordering via filename prefix vs. manifest~~ | —       | **Resolved**: manifest wins. Order stored in `project.json`'s `chapters` array. Filenames are plain slugs with no numeric prefix. See T-001, T-003, T-004.                                                                                                                                |
+| ~~OQ-2~~ | ~~Lexical Markdown fidelity~~                         | —       | **Resolved**: CommonMark only for now via `WEAVER_TRANSFORMERS` (extension array in `src/lib/markdown.ts`). Future Pandoc transformers added there. YAML frontmatter not needed — pandoc-publish uses a separate metadata file edited via the file view (T-010, T-011).                   |
+| ~~OQ-3~~ | ~~Auto-save vs. manual save~~                         | —       | **Resolved**: implement both. Auto-save on 1s debounce + Ctrl+S for immediate save. Add a user setting to disable auto-save. See T-012, T-019.                                                                                                                                            |
+| ~~OQ-4~~ | ~~Codex entry editor~~                                | —       | **Resolved**: full Lexical editor. Writers may want stylized text in codex entries (bold, italic, etc.) even if they're reference notes. Use the same Markdown ↔ Lexical serialization as chapters. See T-016.                                                                            |
+| ~~OQ-5~~ | ~~Outline anchor strategy~~                           | —       | **Resolved**: HTML comment anchors in Markdown (`<!-- weaver-anchor:UUID -->`), represented as invisible `AnchorNode` decorator nodes in Lexical. Survives save/load cycles and text edits. `OutlineItem.anchorId: string` replaces offset fields. See T-001, T-002, T-011, T-014, T-015. |

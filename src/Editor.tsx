@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -7,9 +7,10 @@ import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { EditorState } from "lexical";
+import type { EditorState } from "lexical";
 import { AnchorNode } from "./nodes/AnchorNode";
 import { useEditor } from "./contexts/EditorContext";
+import { markdownToEditorState, editorStateToMarkdown } from "./lib/markdown";
 
 const theme = {
   paragraph: "mb-4 text-lg leading-relaxed text-zinc-100",
@@ -30,18 +31,50 @@ function EditorRefPlugin() {
   return null;
 }
 
-export default function Editor() {
+interface InitialContentPluginProps {
+  initialContent: string;
+  onContentChange: (markdown: string) => void;
+}
+
+/**
+ * Loads initialContent into the editor exactly once on mount, then wires up
+ * onContentChange for all subsequent edits. Uses a mountedRef so the initial
+ * load does not trigger a dirty/save cycle.
+ */
+function InitialContentPlugin({ initialContent, onContentChange }: InitialContentPluginProps) {
+  const [editor] = useLexicalComposerContext();
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    markdownToEditorState(initialContent, editor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — fires exactly once at mount
+
+  return (
+    <OnChangePlugin
+      ignoreSelectionChange
+      onChange={(editorState: EditorState) => {
+        if (!mountedRef.current) {
+          mountedRef.current = true;
+          return; // skip the emission caused by the initial load
+        }
+        onContentChange(editorStateToMarkdown(editorState));
+      }}
+    />
+  );
+}
+
+export interface EditorProps {
+  initialContent: string;
+  onContentChange: (markdown: string) => void;
+}
+
+export default function Editor({ initialContent, onContentChange }: EditorProps) {
   const initialConfig = {
     namespace: "WeaverEditor",
     theme,
     onError,
     nodes: [AnchorNode],
-  };
-
-  const onChange = (editorState: EditorState) => {
-    editorState.read(() => {
-      console.log("Editor state updated.", editorState.toJSON());
-    });
   };
 
   return (
@@ -60,7 +93,7 @@ export default function Editor() {
         />
         <HistoryPlugin />
         <AutoFocusPlugin />
-        <OnChangePlugin onChange={onChange} />
+        <InitialContentPlugin initialContent={initialContent} onContentChange={onContentChange} />
         <EditorRefPlugin />
       </div>
     </LexicalComposer>

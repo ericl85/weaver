@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ProjectProvider, useProject } from './contexts/ProjectContext';
 import { EditorProvider } from './contexts/EditorContext';
-import Editor from './Editor';
+import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
 import FileEditor from './components/FileEditor';
@@ -51,11 +51,7 @@ function AppShell() {
             onClose={() => setRawFile(null)}
           />
         ) : (
-          <div className="absolute inset-0 overflow-y-auto flex justify-center">
-            <div className="w-full flex flex-col min-h-full py-12 px-8 lg:px-16 xl:px-24">
-              <Editor />
-            </div>
-          </div>
+          <ChapterStackManager />
         )}
       </div>
 

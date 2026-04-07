@@ -60,8 +60,13 @@ The right sidebar hosts Outline, Codex, Preview, and AI as swappable panels behi
 ### State management: React Context (no Redux/Zustand yet)
 The project is too early-stage to warrant a global state library. A `ProjectContext` will hold the active project path, chapter list, and open chapter. A `SettingsContext` holds per-device user preferences (e.g. auto-save toggle), persisted to `localStorage`. Lexical manages its own internal state.
 
-### Save behaviour: auto-save + Ctrl+S + user toggle
-Both auto-save (1s debounce) and manual save (Ctrl+S) are implemented. A `SettingsContext` preference `autoSave: boolean` (default: true) controls whether the debounced save fires. Ctrl+S always saves immediately regardless of the setting.
+### Editor model: multi-instance stack (one Lexical instance per open chapter)
+Selecting a chapter spawns a new `ChapterEditorLayer` (keyed by filename) and stacks it on top. All open layers stay mounted simultaneously — only the active one is visible (`display:none` for others). Undo history survives chapter switches for free. Switching chapters is instant after the first load (no re-read from disk).
+
+**Why**: a single shared editor with load/unload logic creates an inescapable race condition — any async gap between "which chapter is active" and "what content is in the editor" can cause a file overwrite. The multi-instance model makes this architecturally impossible: each instance is permanently bound to one filename and never loads content from any other source.
+
+### Save behaviour: parent-owned, per-chapter debounce + Ctrl+S
+`ChapterStackManager` owns all save logic. `Editor.tsx` is a pure editing surface — it only reports content up via `onContentChange(markdown)`. The manager stores `latestContent: Map<filename, markdown>` and `saveTimers: Map<filename, timer>`. Each chapter's debounce timer is independent. Ctrl+S on the wrapper div saves the active chapter immediately. File overwrites are impossible because `latestContent.get(filename)` and `filename` always use the same key.
 
 ### Codex editor: full Lexical instance (same as chapters)
 Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization as the chapter editor, not a plain textarea. Writers may want stylized text (bold, italic) in reference notes. The codex editor is a second `LexicalComposer` instance scoped to the sidebar panel — it does not share state with the chapter editor.
@@ -72,7 +77,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Editor ↔ file persistence | Not started | `onChange` logs to console; no save/load wiring |
+| Editor ↔ file persistence | Complete (T-012) | ChapterStackManager + ChapterEditorLayer; auto-save 1s debounce + Ctrl+S; dirty indicator dot |
 | Project open/create flow | Complete (T-008, T-009) | WelcomeScreen with New/Open, ProjectContext wired |
 | Left navigation pane | Complete (T-010) | LeftPane with Content/Files toggle; ChapterList (chapters + codex), FileExplorer (dir tree), FileEditor (raw textarea, Ctrl+S) |
 | Sidebar panel system | Complete (T-013) | Sidebar.tsx + SidebarIcon.tsx; icon strip always visible, one panel at a time, collapses to strip when none active |
