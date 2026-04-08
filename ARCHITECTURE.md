@@ -11,5 +11,5 @@ Weaver is a minimalist, offline-first, novel writing platform.
 
 ## 3. UI / UX Principles
 
-- Markdown First: The editor should be plain text.
-- Distraction-Free: No floating menus over the text. The Codex and Outline tools should exist in collapsible sidebars.
+- Rich Text Editing, Markdown Storage: The editor uses Lexical as a rich text editor — users see formatted text (bold, italic, headings, lists, etc.) as they type. Files are stored as Markdown on disk. There is no separate preview panel because the editor *is* the rendered view.
+- Distraction-Free: No floating menus over the text. The formatting toolbar is a fixed bar above the editor, not a floating popup. The Codex and Outline tools exist in collapsible sidebars.

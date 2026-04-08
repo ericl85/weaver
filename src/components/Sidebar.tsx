@@ -2,12 +2,11 @@ import { useState } from 'react';
 import SidebarIcon from './SidebarIcon';
 import OutlinePanel from './panels/OutlinePanel';
 
-type PanelId = 'outline' | 'codex' | 'preview' | 'ai';
+type PanelId = 'outline' | 'codex' | 'ai';
 
 const PANEL_LABELS: Record<PanelId, string> = {
   outline: 'Outline',
   codex: 'Codex',
-  preview: 'Preview',
   ai: 'AI Assistant',
 };
 
@@ -30,13 +29,6 @@ const CodexIcon = () => (
   </svg>
 );
 
-const PreviewIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
 const AIIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
@@ -46,17 +38,16 @@ const AIIcon = () => (
 const PANEL_ICONS: Record<PanelId, React.ReactNode> = {
   outline: <OutlineIcon />,
   codex: <CodexIcon />,
-  preview: <PreviewIcon />,
   ai: <AIIcon />,
 };
 
-const PANELS: PanelId[] = ['outline', 'codex', 'preview', 'ai'];
+const PANELS: PanelId[] = ['outline', 'codex', 'ai'];
 
 export interface SidebarPanelProps {
   activePanel: PanelId | null;
 }
 
-// Panel slot — T-016, T-018, T-022 will fill in codex/preview/ai
+// Panel slot — T-016, T-022 will fill in codex/ai
 function PanelContent({ panel }: { panel: PanelId }) {
   if (panel === 'outline') return <OutlinePanel />;
   return (

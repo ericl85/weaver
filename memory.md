@@ -36,8 +36,8 @@ _Last updated: 2026-04-06. Update this file whenever a phase completes or an arc
 
 ## Architectural Decisions Made
 
-### Editor: Lexical (not CodeMirror / Monaco / plain textarea)
-Lexical was chosen because it is compositional (features are plugins), React-native, and capable of rich text semantics that may be needed for future AI annotation features. The tradeoff is that Lexical's serialization format is its own JSON — Markdown must be converted to/from Lexical nodes explicitly. **Implication**: implement a Markdown ↔ Lexical serialization step when persisting chapters.
+### Editor: Lexical as rich text editor with Markdown storage
+Lexical was chosen because it is compositional (features are plugins), React-native, and capable of rich text rendering. It is a **rich text editor**, not a Markdown source editor like Obsidian — users see formatted text (bold, italic, headings, lists, etc.) as they type. Files are stored as Markdown on disk via `@lexical/markdown` serialization. There is no separate preview panel because the editor *is* the rendered view. A fixed formatting toolbar above the editor provides text controls. **Implication**: all Lexical node types used by the Markdown transformers (HeadingNode, QuoteNode, ListNode, etc.) must be registered in the editor config.
 
 ### Styling: Tailwind utilities only, dark theme only
 No CSS-in-JS, no separate stylesheet per component. All color tokens use the `zinc` scale. The design intentionally avoids a light mode to reduce scope.
@@ -55,7 +55,7 @@ Chapter filenames are plain slugs (`chapter-title.md`) — **no numeric prefix**
 The left navigation pane has two modes: **content view** (chapter list + codex list, the normal writing UI) and **file view** (raw project directory browser). File view opens any file in a plain `FileEditor` (`<textarea>`) in the center pane — this is how users edit metadata files (`project.json`, future `metadata.yaml`) without a separate settings screen.
 
 ### Right sidebar: Swappable tool panels
-The right sidebar hosts Outline, Codex, Preview, and AI as swappable panels behind an icon strip. Only one panel is visible at a time.
+The right sidebar hosts Outline, Codex, and AI as swappable panels behind an icon strip. Only one panel is visible at a time. There is no Preview panel — Lexical is a rich text editor, so the editor itself is the rendered view.
 
 ### State management: React Context (no Redux/Zustand yet)
 The project is too early-stage to warrant a global state library. A `ProjectContext` will hold the active project path, chapter list, and open chapter. A `SettingsContext` holds per-device user preferences (e.g. auto-save toggle), persisted to `localStorage`. Lexical manages its own internal state.
@@ -80,7 +80,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Editor ↔ file persistence | Complete (T-012) | ChapterStackManager + ChapterEditorLayer; auto-save 1s debounce + Ctrl+S; dirty indicator dot |
 | Project open/create flow | Complete (T-008, T-009) | WelcomeScreen with New/Open, ProjectContext wired |
 | Left navigation pane | Complete (T-010) | LeftPane with Content/Files toggle; ChapterList (chapters + codex), FileExplorer (dir tree), FileEditor (raw textarea, Ctrl+S) |
-| Sidebar panel system | Complete (T-013) | Sidebar.tsx + SidebarIcon.tsx; icon strip always visible, one panel at a time, collapses to strip when none active |
+| Sidebar panel system | Complete (T-013) | Sidebar.tsx + SidebarIcon.tsx; icon strip always visible, one panel at a time, collapses to strip when none active. Preview panel removed — Lexical is the rendered view. |
 | Outline panel | Complete (T-014) | OutlinePanel.tsx in panels/; AnchorNode.tsx in nodes/; EditorContext.tsx exposes LexicalEditor instance; EditorRefPlugin inside Editor.tsx sets it |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Complete (T-011) | src/lib/markdown.ts; WEAVER_TRANSFORMERS extends TRANSFORMERS with AnchorTransformer; markdownToEditorState / editorStateToMarkdown exported |

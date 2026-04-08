@@ -266,7 +266,7 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
   - **Goal**: Replace the placeholder sidebar div with a panel system: an icon strip on the right edge + a content area that renders the active panel.
   - **Files to create**: `src/components/Sidebar.tsx`, `src/components/SidebarIcon.tsx`
   - **Files to modify**: `src/App.tsx`
-  - **Panels**: Outline, Codex, Preview, (AI placeholder). Each icon toggles its panel open/closed. Only one panel visible at a time. Sidebar collapses to icon strip when no panel is active.
+  - **Panels**: Outline, Codex, (AI placeholder). Each icon toggles its panel open/closed. Only one panel visible at a time. Sidebar collapses to icon strip when no panel is active. _(Preview panel removed — Lexical is a rich text editor, so the editor itself is the rendered view.)_
   - **Depends on**: T-008 (needs project context for Codex/Outline)
   - **Fits architecture**: Single swappable sidebar area per ARCHITECTURE.md and the sidebar model decision in `memory.md`.
 
@@ -323,28 +323,37 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-## Phase 7 — Markdown Preview Panel
+## Phase 7 — Editor Formatting Toolbar
 
 ---
 
-- [ ] **T-017 — Add markdown preview library**
-  - **Goal**: Add a Markdown-to-HTML renderer for the preview panel.
-  - **Files to modify**: `package.json`
-  - **Dependency**: Add `marked` or `remark` + `remark-html`. Prefer `marked` for simplicity; switch to `remark` if we need plugins later.
-  - **Depends on**: nothing
-  - **Fits architecture**: Rendering happens entirely in the frontend; no Rust needed.
-
----
-
-- [ ] **T-018 — Build Markdown Preview panel**
-  - **Goal**: Show a live rendered HTML preview of the active chapter.
-  - **Files to create**: `src/components/panels/PreviewPanel.tsx`
-  - **Features**:
-    - Renders current editor content as HTML (uses `editorStateToMarkdown` from T-011 → `marked`)
-    - Updates on editor change (debounced ~300ms)
-    - Styled to match the writing theme (font, colors)
-  - **Depends on**: T-011, T-013, T-017
-  - **Fits architecture**: Preview is a sidebar panel. Uses the same Markdown serialization layer.
+- [ ] **T-017 — Register Lexical node types and add formatting toolbar**
+  - **Goal**: Register the Lexical node types required by the Markdown transformers, add the necessary Lexical plugins, and build a formatting toolbar above the editor.
+  - **Why this is critical**: Currently only `AnchorNode` is registered. The `TRANSFORMERS` from `@lexical/markdown` reference `HeadingNode`, `QuoteNode`, `ListNode`, `ListItemNode`, `CodeNode`, `CodeHighlightNode`, and `LinkNode` — none of which are registered. Markdown with headings, lists, or other block-level formatting loads incorrectly without these.
+  - **New dependencies** (add to `package.json`): `@lexical/list`, `@lexical/link`, `@lexical/code`
+  - **Files to modify**: `src/Editor.tsx`, `package.json`
+  - **Files to create**: `src/components/EditorToolbar.tsx`
+  - **Node registration** (add to `initialConfig.nodes` in `Editor.tsx`):
+    - `HeadingNode` (from `@lexical/rich-text`)
+    - `QuoteNode` (from `@lexical/rich-text`)
+    - `ListNode`, `ListItemNode` (from `@lexical/list`)
+    - `CodeNode`, `CodeHighlightNode` (from `@lexical/code`)
+    - `LinkNode`, `AutoLinkNode` (from `@lexical/link`)
+  - **Plugins to add** (inside `LexicalComposer`):
+    - `ListPlugin` (from `@lexical/react/LexicalListPlugin`) — required for list behavior
+    - `LinkPlugin` (from `@lexical/react/LexicalLinkPlugin`) — required for link behavior
+    - `MarkdownShortcutPlugin` with `WEAVER_TRANSFORMERS` — lets users type `# `, `- `, `> `, `` ``` ``, `**`, `_` etc. and get live formatting (Obsidian-like shortcuts within the rich text editor)
+  - **Theme classes** (extend the `theme` object in `Editor.tsx`):
+    - Add classes for `heading.h1`, `heading.h2`, `heading.h3`, `quote`, `list.ul`, `list.ol`, `list.listitem`, `code`, `codeHighlight`, `link`, `text.bold`, `text.italic`, `text.strikethrough`, `text.code`
+  - **EditorToolbar component**:
+    - Fixed bar above the `ContentEditable`, inside the `LexicalComposer` tree (needs editor context)
+    - Buttons: **Bold**, _Italic_, ~~Strikethrough~~, `Code`, H1, H2, H3, Bullet List, Numbered List, Blockquote, Code Block, Link
+    - Each button dispatches the appropriate Lexical command (e.g. `FORMAT_TEXT_COMMAND` for bold/italic, `INSERT_ORDERED_LIST_COMMAND` for numbered list, etc.)
+    - Active state: buttons reflect current selection formatting (bold button highlighted when cursor is in bold text, etc.) via `$getSelection()` inspection in an update listener
+    - Styled as a minimal, dark toolbar consistent with the zinc palette — not floating, not intrusive
+    - Keyboard shortcuts: Ctrl+B (bold), Ctrl+I (italic), Ctrl+Shift+S (strikethrough) come free with `RichTextPlugin`; Markdown shortcuts come free with `MarkdownShortcutPlugin`
+  - **Depends on**: T-011, T-012
+  - **Fits architecture**: Toolbar is a fixed bar, not a floating menu (per ARCHITECTURE.md). Node registration is prerequisite for correct Markdown round-tripping. MarkdownShortcutPlugin gives users Obsidian-like shortcuts without a separate preview.
 
 ---
 
