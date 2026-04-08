@@ -78,6 +78,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Area | Status | Notes |
 |------|--------|-------|
 | Editor ↔ file persistence | Complete (T-012) | ChapterStackManager + ChapterEditorLayer; auto-save 1s debounce + Ctrl+S; dirty indicator dot |
+| Formatting toolbar + node registration | Complete (T-017) | EditorToolbar.tsx fixed above scroll area; HeadingNode, QuoteNode, ListNode, ListItemNode, CodeNode, CodeHighlightNode, LinkNode, AutoLinkNode all registered; ListPlugin, LinkPlugin, MarkdownShortcutPlugin added |
 | Project open/create flow | Complete (T-008, T-009) | WelcomeScreen with New/Open, ProjectContext wired |
 | Left navigation pane | Complete (T-010) | LeftPane with Content/Files toggle; ChapterList (chapters + codex), FileExplorer (dir tree), FileEditor (raw textarea, Ctrl+S) |
 | Sidebar panel system | Complete (T-013) | Sidebar.tsx + SidebarIcon.tsx; icon strip always visible, one panel at a time, collapses to strip when none active. Preview panel removed — Lexical is the rendered view. |

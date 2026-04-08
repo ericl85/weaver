@@ -405,6 +405,24 @@
   dependencies:
     lexical "0.42.0"
 
+"@lexical/code-prism@0.42.0":
+  version "0.42.0"
+  resolved "https://registry.yarnpkg.com/@lexical/code-prism/-/code-prism-0.42.0.tgz#8467643b11ac15d07590b180101ec70b908db75e"
+  integrity sha512-KgngkUtgcgC8ocBnfGyN71CC3EnP5PMFAmH1KcGp/+jSgl11nRpCjwYYIoUHm6AB7jKJ8dLbd/UUmShARjUnGA==
+  dependencies:
+    "@lexical/code-core" "0.42.0"
+    lexical "0.42.0"
+    prismjs "^1.30.0"
+
+"@lexical/code@^0.42.0":
+  version "0.42.0"
+  resolved "https://registry.yarnpkg.com/@lexical/code/-/code-0.42.0.tgz#f829c13cf2e860335b489c3e2caae49db65a96dd"
+  integrity sha512-KMu1nWae9pHvA9nl6dlJacbt3QBBNemgalmLJcZ5QhdGEQA1cVIU4gBPJ5TJqgY9XF7WZgj5JvDIPxjrZmf+XQ==
+  dependencies:
+    "@lexical/code-core" "0.42.0"
+    "@lexical/code-prism" "0.42.0"
+    lexical "0.42.0"
+
 "@lexical/devtools-core@0.42.0":
   version "0.42.0"
   resolved "https://registry.yarnpkg.com/@lexical/devtools-core/-/devtools-core-0.42.0.tgz#b7bdef193d54d67b5a1b7a496027fe2083a076eb"
@@ -461,7 +479,7 @@
     "@lexical/utils" "0.42.0"
     lexical "0.42.0"
 
-"@lexical/link@0.42.0":
+"@lexical/link@0.42.0", "@lexical/link@^0.42.0":
   version "0.42.0"
   resolved "https://registry.yarnpkg.com/@lexical/link/-/link-0.42.0.tgz#c8c074e5c25399ef327ca016d5e5b624949a699b"
   integrity sha512-cdeM/+f+kn7aGwW/3FIi6USjl1gBNdEEwg0/ZS+KlYcsy8gxx2e4cyVjsomBu/WU17Qxa0NC0paSr7qEJ/1Fig==
@@ -470,7 +488,7 @@
     "@lexical/utils" "0.42.0"
     lexical "0.42.0"
 
-"@lexical/list@0.42.0":
+"@lexical/list@0.42.0", "@lexical/list@^0.42.0":
   version "0.42.0"
   resolved "https://registry.yarnpkg.com/@lexical/list/-/list-0.42.0.tgz#64e9e4c1f5147c79afeaaedeea8d52b3997ad473"
   integrity sha512-TIezILnmIVuvfqEEbcMnsT4xQRlswI6ysHISqsvKL6l5EBhs1gqmNYjHa/Yrfzaq5y52TM1PAtxbFts+G7N6kg==
@@ -551,7 +569,7 @@
     lexical "0.42.0"
     react-error-boundary "^6.0.0"
 
-"@lexical/rich-text@0.42.0":
+"@lexical/rich-text@0.42.0", "@lexical/rich-text@^0.42.0":
   version "0.42.0"
   resolved "https://registry.yarnpkg.com/@lexical/rich-text/-/rich-text-0.42.0.tgz#8f9928b998e2ed937638bc8d9d74d2d4365059c0"
   integrity sha512-v4YgiM3oK3FZcRrfB+LetvLbQ5aee9MRO9tHf0EFweXg19XnSjHV0cfPAW7TyPxRELzB69+K0Q3AybRlTMjG4Q==
@@ -1296,6 +1314,11 @@ postcss@^8.5.6, postcss@^8.5.8:
     nanoid "^3.3.11"
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
+
+prismjs@^1.30.0:
+  version "1.30.0"
+  resolved "https://registry.yarnpkg.com/prismjs/-/prismjs-1.30.0.tgz#d9709969d9d4e16403f6f348c63553b19f0975a9"
+  integrity sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==
 
 react-dom@^19.1.0:
   version "19.2.4"

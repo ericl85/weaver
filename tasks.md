@@ -327,7 +327,7 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
-- [ ] **T-017 — Register Lexical node types and add formatting toolbar**
+- [x] **T-017 — Register Lexical node types and add formatting toolbar**
   - **Goal**: Register the Lexical node types required by the Markdown transformers, add the necessary Lexical plugins, and build a formatting toolbar above the editor.
   - **Why this is critical**: Currently only `AnchorNode` is registered. The `TRANSFORMERS` from `@lexical/markdown` reference `HeadingNode`, `QuoteNode`, `ListNode`, `ListItemNode`, `CodeNode`, `CodeHighlightNode`, and `LinkNode` — none of which are registered. Markdown with headings, lists, or other block-level formatting loads incorrectly without these.
   - **New dependencies** (add to `package.json`): `@lexical/list`, `@lexical/link`, `@lexical/code`
