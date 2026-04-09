@@ -19,6 +19,7 @@ import { AnchorNode } from "./nodes/AnchorNode";
 import { useEditor } from "./contexts/EditorContext";
 import { markdownToEditorState, editorStateToMarkdown, WEAVER_TRANSFORMERS } from "./lib/markdown";
 import EditorToolbar from "./components/EditorToolbar";
+import { useTheme } from './contexts/ThemeContext';
 
 const theme = {
   paragraph: "mb-4 text-lg leading-relaxed text-zinc-100",
@@ -151,13 +152,15 @@ export default function Editor({ initialContent, onContentChange }: EditorProps)
     ],
   };
 
+  const { theme: appTheme } = useTheme();
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       {/* flex-1 + min-h-0 so this fills the parent flex column without overflowing */}
       <div className="flex-1 flex flex-col min-h-0">
         <EditorToolbar />
         <div className="flex-1 overflow-y-auto min-h-0 flex justify-center">
-          <div className="relative w-full max-w-3xl px-8 py-12 lg:px-12">
+          <div className={`relative w-full max-w-3xl px-8 py-12 lg:px-12 ${appTheme.textAlign === 'justify' ? 'text-justify' : ''}`}>
             <RichTextPlugin
               contentEditable={
                 <ContentEditable className="outline-none focus:outline-none focus:ring-0 min-h-[50vh]" />

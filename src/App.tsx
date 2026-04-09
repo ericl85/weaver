@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ProjectProvider, useProject } from './contexts/ProjectContext';
 import { EditorProvider } from './contexts/EditorContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
@@ -63,10 +65,14 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ProjectProvider>
-      <EditorProvider>
-        <AppShell />
-      </EditorProvider>
-    </ProjectProvider>
+    <SettingsProvider>
+      <ThemeProvider>
+        <ProjectProvider>
+          <EditorProvider>
+            <AppShell />
+          </EditorProvider>
+        </ProjectProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   );
 }

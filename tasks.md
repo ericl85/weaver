@@ -294,6 +294,18 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
+- [ ] **T-014b — Outline panel UX polish**
+  - **Goal**: Fix three usability rough edges in the Outline panel noticed after T-014.
+  - **Files to modify**: `src/components/panels/OutlinePanel.tsx`
+  - **Issues to fix**:
+    1. **Type/category field**: replace the dropdown with a free-text input that autocompletes from type strings already present in the current chapter's outline items. As the user types, show matching suggestions; if no match, the typed value is used as-is. No predefined list — suggestions are derived entirely from existing item types in the chapter.
+    2. **New item UX**: when "Add item" is clicked, the new item should be immediately in edit mode — text field focused, ready to type. No extra "edit" button click required.
+    3. **Item text field**: audit and fix the overall item editing experience so it feels natural inline. The item row in edit mode should be a clean single input, not a layout-breaking widget.
+  - **Depends on**: T-014
+  - **Fits architecture**: Panel-only change, no Lexical core or IPC changes needed.
+
+---
+
 - [ ] **T-015 — Implement outline ↔ editor position sync**
   - **Goal**: As the cursor moves in the editor, highlight the outline item whose `AnchorNode` is nearest behind the cursor. Clicking an outline item scrolls the editor to its anchor.
   - **Files to modify**: `src/Editor.tsx`, `src/components/panels/OutlinePanel.tsx`
@@ -357,11 +369,25 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
+- [ ] **T-018 — Add horizontal rule to toolbar**
+  - **Goal**: Add a horizontal rule (thematic break) insert button to the editor toolbar.
+  - **Files to modify**: `src/components/EditorToolbar.tsx`, `src/Editor.tsx`
+  - **Approach**:
+    - Register `HorizontalRuleNode` (from `@lexical/react/LexicalHorizontalRuleNode`) in the editor's `nodes` array.
+    - Add `HorizontalRulePlugin` (from `@lexical/react/LexicalHorizontalRulePlugin`) inside the `LexicalComposer`.
+    - Add a `INSERT_HORIZONTAL_RULE_COMMAND` dispatch button to the toolbar (an `―` or similar icon).
+    - Add a theme class for `hr` in `Editor.tsx` theme object (e.g. `my-6 border-zinc-700`).
+    - The `TRANSFORMERS` array already includes `HR` — it will round-trip through Markdown as `---` with no extra work.
+  - **Depends on**: T-017
+  - **Fits architecture**: Follows the same plugin/node registration pattern established in T-017.
+
+---
+
 ## Phase 8 — Theming
 
 ---
 
-- [ ] **T-019 — Define Theme data model, defaults, and app settings**
+- [x] **T-019 — Define Theme data model, defaults, and app settings**
   - **Goal**: Theme config type is already in T-001. Create default theme values, a ThemeContext, and a lightweight app settings store for non-theme preferences (starting with auto-save toggle).
   - **Files to create**: `src/contexts/ThemeContext.tsx`, `src/lib/themes.ts`, `src/contexts/SettingsContext.tsx`
   - **ThemeContext exports**: `DEFAULT_THEME: Theme`, `applyTheme(theme: Theme): void` (sets CSS custom properties), `ThemeContext`, `ThemeProvider`

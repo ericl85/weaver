@@ -43,4 +43,5 @@ export interface Theme {
   backgroundColor: string;
   textColor: string;
   accentColor: string;
+  textAlign: 'left' | 'justify';
 }
