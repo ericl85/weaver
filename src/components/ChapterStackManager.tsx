@@ -159,21 +159,24 @@ export default function ChapterStackManager() {
       className="absolute inset-0 flex flex-col"
       onKeyDown={handleKeyDown}
     >
-      {openChapters.map(({ chapter, initialContent }) => (
-        <ChapterEditorLayer
-          key={chapter.filename}
-          chapter={chapter}
-          initialContent={initialContent}
-          visible={chapter.filename === activeFilename}
-          onContentChange={(md) => handleContentChange(chapter.filename, md)}
-        />
-      ))}
-      {/* Dirty indicator for active chapter */}
-      {activeFilename && dirtyFilenames.has(activeFilename) && (
-        <div className="absolute top-2 right-3 w-2 h-2 rounded-full bg-amber-400 opacity-70 pointer-events-none" title="Unsaved changes" />
-      )}
-      {/* Status bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-6 flex items-center justify-end px-4 bg-zinc-900 border-t border-zinc-800 pointer-events-none">
+      {/* Editor layers live in a flex-1 relative container so the status bar below is never covered */}
+      <div className="flex-1 min-h-0 relative">
+        {openChapters.map(({ chapter, initialContent }) => (
+          <ChapterEditorLayer
+            key={chapter.filename}
+            chapter={chapter}
+            initialContent={initialContent}
+            visible={chapter.filename === activeFilename}
+            onContentChange={(md) => handleContentChange(chapter.filename, md)}
+          />
+        ))}
+        {/* Dirty indicator for active chapter */}
+        {activeFilename && dirtyFilenames.has(activeFilename) && (
+          <div className="absolute top-2 right-3 w-2 h-2 rounded-full bg-amber-400 opacity-70 pointer-events-none" title="Unsaved changes" />
+        )}
+      </div>
+      {/* Status bar as a real flex child — never overlaps the editor or scrollbar */}
+      <div className="h-6 flex-shrink-0 flex items-center justify-end px-4 bg-zinc-900 border-t border-zinc-800 pointer-events-none">
         <span className="text-xs text-zinc-600">
           {activeFilename != null ? `${wordCounts[activeFilename] ?? 0} words` : ''}
         </span>
