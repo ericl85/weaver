@@ -317,6 +317,23 @@ Build the infrastructure for swappable right-sidebar panels before implementing 
 
 ---
 
+- [ ] **T-028 — Highlight anchor paragraph on outline item click**
+  - **Goal**: When the user clicks an outline item and the editor scrolls to its anchor, visually highlight the paragraph containing that anchor so the user can see exactly what the note refers to. Currently the anchor is invisible (`width:0; font-size:0`) so jumping to it feels disorienting — the cursor lands somewhere but there's no visual cue.
+  - **Files to modify**: `src/nodes/AnchorNode.tsx`, `src/components/panels/OutlinePanel.tsx`, `src/Editor.tsx` or a new Lexical plugin
+  - **Approach**:
+    - When an outline item is clicked, find the `AnchorNode`'s DOM element via `data-anchor-id`, then walk up to its parent block element (the containing `<p>`, `<h1>`, `<li>`, etc.)
+    - Apply a temporary highlight class (e.g. a subtle background tint like `bg-zinc-700/40` or a left-border accent) to that block element
+    - The highlight should be transient — fade out after ~2 seconds or clear when the user starts typing/clicking elsewhere
+    - If the anchor's parent block is the right granularity most of the time (paragraphs are the common case), use that. Don't try to highlight arbitrary ranges of text.
+  - **Edge cases**:
+    - Anchor at the very start/end of a paragraph — still highlight the whole paragraph
+    - Anchor inside a list item — highlight the `<li>`, not the whole list
+    - Multiple anchors in the same paragraph — each click highlights the same paragraph, which is fine
+  - **Depends on**: T-015 (scroll-to-anchor must work first)
+  - **Fits architecture**: DOM-level highlight on the block element, not a Lexical state change — avoids dirtying the editor state or triggering saves. Purely visual feedback.
+
+---
+
 ## Phase 6 — Codex Panel
 
 ---
@@ -435,16 +452,80 @@ _No AI features are built yet. This phase ensures the sidebar and data access pa
 
 ---
 
-- [ ] **T-023 — Update window configuration**
-  - **Goal**: Set a more appropriate default window size and min-size.
+- [x] **T-023 — Borderless window configuration**
+  - **Goal**: Remove the native OS title bar and set an appropriate default window size, preparing for a custom title bar in T-025.
   - **Files to modify**: `src-tauri/tauri.conf.json`
-  - **Changes**: `width: 1280, height: 800, minWidth: 900, minHeight: 600`
+  - **Changes**:
+    - Set `decorations: false` to remove the native title bar and window chrome
+    - Set `width: 1280, height: 800, minWidth: 900, minHeight: 600`
   - **Depends on**: nothing
-  - **Fits architecture**: 800×600 is too small for a 2-pane writing app.
+  - **Fits architecture**: A borderless window gives Weaver full control over its appearance. The app will be un-draggable and missing window controls until T-025 is implemented — implement them together.
 
 ---
 
-- [ ] **T-024 — Add word count to chapter list and status bar**
+- [x] **T-025 — Custom title bar with window controls and menu bar**
+  - **Goal**: Implement a custom `TitleBar.tsx` component that replaces the native title bar with a draggable bar containing app branding, a menu bar, and window controls.
+  - **Files to modify**: `src/components/TitleBar.tsx` (new), `src/App.tsx`
+  - **Component structure**:
+    - Full-width bar at the top of `AppShell`, above the existing flex layout
+    - Tauri drag region (`data-tauri-drag-region`) so the window remains draggable
+    - **Left**: App name "Weaver" as branding
+    - **Center-left**: Menu bar with dropdown menus:
+      - **File**: New Project, Open Project, Save (Ctrl+S), Close Project, separator, Exit
+      - **Edit**: Undo (Ctrl+Z), Redo (Ctrl+Y), separator, Cut, Copy, Paste, Select All
+      - **View**: Toggle Left Pane, Toggle Right Sidebar, separator, Fullscreen
+      - **Help**: About Weaver
+    - **Right**: Window control buttons (minimize, maximize/restore, close) using `@tauri-apps/api/window`
+  - **Behavior**:
+    - Menus open on click, close on outside click / blur
+    - Only one menu open at a time; hovering another menu label while one is open switches to it
+    - Menu items show keyboard shortcut hints (display only — actual shortcuts handled in T-026)
+    - Wire up actions that already exist: Save (trigger Ctrl+S), toggle left/right panes, New/Open/Close Project via ProjectContext
+    - Edit menu items (Undo, Redo, Cut, Copy, Paste, Select All) use `document.execCommand` for now
+    - Window controls call `appWindow.minimize()`, `appWindow.toggleMaximize()`, `appWindow.close()`
+  - **Styling**: `bg-zinc-800`, `border-b border-zinc-700`, compact height (~32px). Menu dropdowns use `bg-zinc-800` with `border border-zinc-700`.
+  - **Depends on**: T-023
+  - **Fits architecture**: Replaces OS chrome with an app-native menu bar. No floating elements over the editor — the title bar is fixed above everything.
+
+---
+
+- [ ] **T-026 — Menu keyboard shortcuts**
+  - **Goal**: Add global keyboard shortcut handling for menu actions introduced in T-025.
+  - **Files to modify**: `src/components/TitleBar.tsx` or a new `src/hooks/useGlobalShortcuts.ts`
+  - **Shortcuts**:
+    - `Ctrl+N` — New Project
+    - `Ctrl+O` — Open Project
+    - `Ctrl+S` — Save (already exists, ensure no conflict)
+    - `F11` — Toggle Fullscreen
+  - **Approach**: `useEffect` with a global `keydown` listener, registered once at the app root. Avoid conflicts with Lexical's own key handlers (Ctrl+Z/Y, Ctrl+B/I are already handled by the editor).
+  - **Depends on**: T-025
+  - **Fits architecture**: Keyboard-driven workflows are essential for a writing app. Shortcuts are global but defer to the editor when it has focus.
+
+---
+
+- [ ] **T-027 — Wire theme system to editor and UI rendering**
+  - **Goal**: Make the app theme the single source of truth for all visual styling — editor content, UI chrome, and future themeable surfaces. Currently, `applyTheme()` sets CSS variables that nothing reads, and the Lexical theme object is a hardcoded blob of Tailwind classes that never updates.
+  - **Files to modify**: `src/lib/themes.ts`, `src/Editor.tsx`, `src/types/index.ts`, `src/contexts/ThemeContext.tsx`, `src/index.css` (or a new theme stylesheet)
+  - **Current problems**:
+    - CSS variables (`--theme-font-family`, `--theme-text`, etc.) are set on the document root but never referenced by any CSS rule or component
+    - The Lexical `theme` object in `Editor.tsx` is static — hardcoded Tailwind classes like `text-zinc-100`, `text-sm`, etc. These ignore the app theme entirely
+    - Only `textAlign` works because it's applied as a Tailwind class on the editor wrapper, bypassing the whole system
+    - `DEFAULT_THEME` has `fontSize: 72` and `textColor: "#0000ff"` — clearly test values that never rendered
+  - **Approach**:
+    - **CSS variables as the bridge**: `applyTheme()` already sets variables on `:root`. Add CSS rules (in `index.css` or a theme stylesheet) that reference them. This way the Lexical theme classes, editor content area, and UI chrome all inherit from one place.
+    - **Generate the Lexical theme dynamically**: Replace the static `theme` object with a function `buildLexicalTheme(appTheme: Theme)` that produces the Lexical theme using CSS classes that reference the variables (or generates appropriate classes). This keeps Lexical's class-based theming intact while making it responsive to theme changes.
+    - **Remount editor on theme change**: Use a `key` prop on `LexicalComposer` derived from theme identity (e.g. `theme.name` or a hash). When the theme changes, the editor remounts with the new Lexical theme object. This is the simplest correct approach — no need to fight Lexical's static config.
+    - **Fix the Theme type**: Expand it to cover what users will actually want to theme. Consider: editor font, editor background (distinct from app background), accent color usage, toolbar/sidebar styling. Don't over-specify now, but make sure the type is extensible.
+    - **Fix DEFAULT_THEME**: Correct the obviously wrong values (`fontSize: 72`, `textColor: "#0000ff"`).
+  - **What NOT to do**:
+    - Don't use inline styles on ContentEditable as the primary mechanism — it works for a few properties but doesn't scale to heading sizes, quote styling, code block colors, etc.
+    - Don't hardcode Tailwind color classes for anything that should be user-configurable
+  - **Depends on**: nothing (can be done independently)
+  - **Fits architecture**: The theme system was designed correctly in concept (CSS variables + context) but never connected to rendering. This task closes that gap and makes it ready for a future theme settings UI.
+
+---
+
+- [x] **T-024 — Add word count to chapter list and status bar**
   - **Goal**: Show word count per chapter in the chapter list and a live word count for the current chapter.
   - **Files to modify**: `src/components/ChapterList.tsx`, `src/Editor.tsx`
   - **Approach**: Count words in the Markdown string on every auto-save tick; store in chapter metadata or compute live.
