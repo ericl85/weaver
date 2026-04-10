@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useProject } from '../contexts/ProjectContext';
+import { useWordCount } from '../contexts/WordCountContext';
 import type { CodexEntry } from '../types';
 import {
   createChapter,
@@ -14,6 +15,7 @@ interface Props {
 
 export default function ChapterList({ onChapterClick }: Props) {
   const { project, chapters, activeChapter, setActiveChapter, refreshChapters } = useProject();
+  const { wordCounts } = useWordCount();
 
   const [codexEntries, setCodexEntries] = useState<CodexEntry[]>([]);
   const [codexOpen, setCodexOpen] = useState(false);
@@ -132,6 +134,13 @@ export default function ChapterList({ onChapterClick }: Props) {
               >
                 {chapter.title}
               </button>
+            )}
+
+            {/* Word count (hidden on hover) */}
+            {renamingFilename !== chapter.filename && wordCounts[chapter.filename] !== undefined && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex group-hover:hidden">
+                <span className="text-zinc-600 text-xs">{wordCounts[chapter.filename]}</span>
+              </div>
             )}
 
             {/* Action icons (visible on hover) */}

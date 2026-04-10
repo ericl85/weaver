@@ -3,6 +3,7 @@ import { useProject } from '../contexts/ProjectContext';
 import { readChapter, saveChapter } from '../lib/tauri';
 import ChapterEditorLayer from './ChapterEditorLayer';
 import type { Chapter } from '../types';
+import { useWordCount, countWords } from '../contexts/WordCountContext';
 
 interface OpenChapter {
   chapter: Chapter;
@@ -24,6 +25,7 @@ const DEBOUNCE_MS = 1000;
  */
 export default function ChapterStackManager() {
   const { project, activeChapter } = useProject();
+  const { wordCounts, setWordCount } = useWordCount();
 
   const [openChapters, setOpenChapters] = useState<OpenChapter[]>([]);
   const [activeFilename, setActiveFilename] = useState<string | null>(null);
@@ -89,6 +91,7 @@ export default function ChapterStackManager() {
     try {
       const content = await readChapter(project.rootPath, filename);
       latestContent.current.set(filename, content);
+      setWordCount(filename, countWords(content));
       setOpenChapters(prev => {
         if (prev.some(oc => oc.chapter.filename === filename)) {
           // Was loaded while we were fetching — just switch
@@ -117,6 +120,7 @@ export default function ChapterStackManager() {
 
   const handleContentChange = useCallback((filename: string, markdown: string) => {
     latestContent.current.set(filename, markdown);
+    setWordCount(filename, countWords(markdown));
     setDirtyFilenames(prev => {
       const next = new Set(prev);
       next.add(filename);
@@ -168,6 +172,12 @@ export default function ChapterStackManager() {
       {activeFilename && dirtyFilenames.has(activeFilename) && (
         <div className="absolute top-2 right-3 w-2 h-2 rounded-full bg-amber-400 opacity-70 pointer-events-none" title="Unsaved changes" />
       )}
+      {/* Status bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-6 flex items-center justify-end px-4 bg-zinc-900 border-t border-zinc-800 pointer-events-none">
+        <span className="text-xs text-zinc-600">
+          {activeFilename != null ? `${wordCounts[activeFilename] ?? 0} words` : ''}
+        </span>
+      </div>
     </div>
   );
 }

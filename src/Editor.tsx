@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -17,12 +17,16 @@ import { LinkNode, AutoLinkNode } from "@lexical/link";
 import type { EditorState } from "lexical";
 import { AnchorNode } from "./nodes/AnchorNode";
 import { useEditor } from "./contexts/EditorContext";
-import { markdownToEditorState, editorStateToMarkdown, WEAVER_TRANSFORMERS } from "./lib/markdown";
+import {
+  markdownToEditorState,
+  editorStateToMarkdown,
+  WEAVER_TRANSFORMERS,
+} from "./lib/markdown";
 import EditorToolbar from "./components/EditorToolbar";
-import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from "./contexts/ThemeContext";
 
 const theme = {
-  paragraph: "mb-4 text-lg leading-relaxed text-zinc-100",
+  paragraph: "mb-4 text-sm leading-relaxed text-zinc-100",
   heading: {
     h1: "text-3xl font-bold mb-4 mt-6 text-zinc-100",
     h2: "text-2xl font-semibold mb-3 mt-5 text-zinc-100",
@@ -106,7 +110,10 @@ interface InitialContentPluginProps {
  * onContentChange for all subsequent edits. Uses a mountedRef so the initial
  * load does not trigger a dirty/save cycle.
  */
-function InitialContentPlugin({ initialContent, onContentChange }: InitialContentPluginProps) {
+function InitialContentPlugin({
+  initialContent,
+  onContentChange,
+}: InitialContentPluginProps) {
   const [editor] = useLexicalComposerContext();
   const mountedRef = useRef(false);
 
@@ -134,7 +141,10 @@ export interface EditorProps {
   onContentChange: (markdown: string) => void;
 }
 
-export default function Editor({ initialContent, onContentChange }: EditorProps) {
+export default function Editor({
+  initialContent,
+  onContentChange,
+}: EditorProps) {
   const initialConfig = {
     namespace: "WeaverEditor",
     theme,
@@ -160,7 +170,9 @@ export default function Editor({ initialContent, onContentChange }: EditorProps)
       <div className="flex-1 flex flex-col min-h-0">
         <EditorToolbar />
         <div className="flex-1 overflow-y-auto min-h-0 flex justify-center">
-          <div className={`relative w-full max-w-3xl px-8 py-12 lg:px-12 ${appTheme.textAlign === 'justify' ? 'text-justify' : ''}`}>
+          <div
+            className={`relative w-full max-w-3xl px-8 py-12 lg:px-12 ${appTheme.textAlign === "justify" ? "text-justify" : ""}`}
+          >
             <RichTextPlugin
               contentEditable={
                 <ContentEditable className="outline-none focus:outline-none focus:ring-0 min-h-[50vh]" />
@@ -179,7 +191,10 @@ export default function Editor({ initialContent, onContentChange }: EditorProps)
         <ListPlugin />
         <LinkPlugin />
         <MarkdownShortcutPlugin transformers={WEAVER_TRANSFORMERS} />
-        <InitialContentPlugin initialContent={initialContent} onContentChange={onContentChange} />
+        <InitialContentPlugin
+          initialContent={initialContent}
+          onContentChange={onContentChange}
+        />
         <EditorRefPlugin />
       </div>
     </LexicalComposer>

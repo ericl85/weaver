@@ -3,6 +3,7 @@ import { ProjectProvider, useProject } from './contexts/ProjectContext';
 import { EditorProvider } from './contexts/EditorContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { WordCountProvider } from './contexts/WordCountContext';
 import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
@@ -69,7 +70,9 @@ export default function App() {
       <ThemeProvider>
         <ProjectProvider>
           <EditorProvider>
-            <AppShell />
+            <WordCountProvider>
+              <AppShell />
+            </WordCountProvider>
           </EditorProvider>
         </ProjectProvider>
       </ThemeProvider>
