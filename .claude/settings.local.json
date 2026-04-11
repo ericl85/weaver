@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue close 16 --comment 'Implemented gutter badges for sticky anchor points.:*)"
+    ]
+  }
+}

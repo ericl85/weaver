@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { Toggle } from './ui/toggle';
+import { useStickyContext } from '../contexts/StickyContext';
 import {
   $getSelection,
   $isRangeSelection,
@@ -46,6 +48,7 @@ function Sep() {
 
 export default function EditorToolbar() {
   const [editor] = useLexicalComposerContext();
+  const { badgesVisible, setBadgesVisible } = useStickyContext();
   const [fmt, setFmt] = useState<FormatState>({
     bold: false,
     italic: false,
@@ -235,6 +238,20 @@ export default function EditorToolbar() {
       >
         <span className="font-mono text-[11px]">{'{}'}</span>
       </button>
+
+      <Sep />
+
+      {/* Stickies visibility toggle */}
+      <Toggle
+        size="sm"
+        pressed={badgesVisible}
+        onPressedChange={setBadgesVisible}
+        title={badgesVisible ? 'Hide sticky badges' : 'Show sticky badges'}
+        aria-label="Toggle sticky badges"
+        className="text-zinc-400 data-[state=on]:text-zinc-100"
+      >
+        <span className="text-[11px]">📌</span>
+      </Toggle>
     </div>
   );
 }

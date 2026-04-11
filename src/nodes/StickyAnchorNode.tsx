@@ -1,16 +1,75 @@
 import React from 'react';
 import type { EditorConfig, LexicalEditor, NodeKey, SerializedLexicalNode, Spread } from 'lexical';
 import { DecoratorNode } from 'lexical';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { useStickyContext } from '../contexts/StickyContext';
 
 export type SerializedStickyAnchorNode = Spread<
   { anchorId: string },
   SerializedLexicalNode
 >;
 
+// Explicit lookup table — Tailwind needs full class names to include them in the build
+const COLOR_TO_BG: Record<string, string> = {
+  amber:   'bg-amber-400',
+  blue:    'bg-blue-400',
+  cyan:    'bg-cyan-400',
+  emerald: 'bg-emerald-400',
+  fuchsia: 'bg-fuchsia-400',
+  green:   'bg-green-400',
+  indigo:  'bg-indigo-400',
+  orange:  'bg-orange-400',
+  pink:    'bg-pink-400',
+  purple:  'bg-purple-400',
+  red:     'bg-red-400',
+  rose:    'bg-rose-400',
+  sky:     'bg-sky-400',
+  teal:    'bg-teal-400',
+  violet:  'bg-violet-400',
+  yellow:  'bg-yellow-400',
+  zinc:    'bg-zinc-400',
+};
+
+function colorToBg(color: string): string {
+  return COLOR_TO_BG[color] ?? 'bg-zinc-400';
+}
+
+interface StickyBadgeProps {
+  anchorId: string;
+}
+
+function StickyBadge({ anchorId }: StickyBadgeProps) {
+  const { anchorMap, highlightSticky, badgesVisible } = useStickyContext();
+  const entry = anchorMap.get(anchorId);
+
+  if (!badgesVisible || !entry) {
+    // Keep a zero-size element so the node has a mount point but takes no space
+    return <span className="inline-block w-0 h-0 overflow-hidden" />;
+  }
+
+  const preview = entry.text.length > 40 ? entry.text.slice(0, 40) + '…' : entry.text;
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className={`inline-block w-2.5 h-2.5 rounded-full ${colorToBg(entry.categoryColor)} cursor-pointer hover:scale-125 transition-transform align-middle mx-0.5`}
+            onClick={() => highlightSticky(entry.stickyId)}
+          />
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[200px] text-xs">
+          {preview || '(no text)'}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 /**
- * Invisible inline node that marks a sticky note anchor position in the document.
+ * Inline node that marks a sticky note anchor position in the document.
  * Stored in Markdown as <!-- weaver-sticky:UUID -->
- * Rendered in the editor as a zero-size span with data-anchor-id and data-category-color attributes.
+ * Renders as a small colored dot badge in the editor; invisible when badges are hidden.
  */
 export class StickyAnchorNode extends DecoratorNode<React.ReactElement> {
   __anchorId: string;
@@ -35,8 +94,8 @@ export class StickyAnchorNode extends DecoratorNode<React.ReactElement> {
   createDOM(_config: EditorConfig, _editor: LexicalEditor): HTMLElement {
     const el = document.createElement('span');
     el.dataset.anchorId = this.__anchorId;
-    el.dataset.categoryColor = 'zinc';
-    el.style.cssText = 'display:inline;width:0;overflow:hidden;font-size:0;line-height:0;pointer-events:none;user-select:none;';
+    // No fixed size — the React component in decorate() controls dimensions
+    el.style.cssText = 'display:inline;user-select:none;';
     return el;
   }
 
@@ -61,7 +120,7 @@ export class StickyAnchorNode extends DecoratorNode<React.ReactElement> {
   }
 
   decorate(): React.ReactElement {
-    return <></>;
+    return <StickyBadge anchorId={this.__anchorId} />;
   }
 }
 
