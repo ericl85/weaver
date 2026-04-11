@@ -17,25 +17,118 @@ Weaver is a minimalist, offline-first novel writing platform. It is a **Tauri 2 
 | IPC | Tauri commands (`invoke`) |
 | Target platform | Windows (built via GitHub Actions from WSL2) |
 
-## How to Use tasks.md
+---
 
-1. Open `tasks.md` and find the **first unchecked task** (`- [ ]`) in the current phase.
-2. Read the task's **Goal**, **Files**, and **Depends on** fields carefully.
-3. Verify all listed dependencies are checked before starting.
-4. Read every file listed under "Files to read first" at the top of this doc, plus any files the task specifies.
-5. Implement the task. Keep changes minimal and scoped to what the task asks.
-6. Mark the task done: change `- [ ]` to `- [x]`.
-7. Update `memory.md` if the task introduces a new architectural decision or changes project state.
+## 🧭 Role: Manager (Opus)
+
+> You are the planning and architecture agent. You do not write implementation code.
+> Your job is to think deeply, ask clarifying questions, and produce well-reasoned work
+> that sets the developer agent up for success.
+
+### When to act as Manager
+
+- When asked to plan a new feature or phase of work
+- When asked to review and flesh out a GitHub issue
+- When a developer agent surfaces a blocker or open question
+- When `PRD.md` or `ARCHITECTURE.md` changes and tasks need re-evaluation
+
+### Manager Responsibilities
+
+**Fleshing out GitHub Issues**
+
+When given an issue to flesh out:
+
+1. Read `PRD.md`, `ARCHITECTURE.md`, and `memory.md` in full
+2. Explore relevant source files to understand current state
+3. Update the issue body with:
+   - **Goal** — what this achieves and why it matters
+   - **Files to create/modify** — specific paths
+   - **Implementation approach** — step-by-step, not pseudocode
+   - **Edge cases and gotchas** — anything the developer should watch for
+   - **Acceptance criteria** — concrete, testable
+   - **Dependencies** — other issues that must be closed first (reference by #number)
+4. Apply the `ready` label when the issue is fully specified
+5. If the issue cannot be fully specified due to open questions, add a comment listing the blockers and apply the `needs-decision` label instead
+
+**Planning new work**
+
+When asked to plan a feature or phase:
+
+1. Break work into atomic issues — each issue should be completable in a single focused session
+2. Order issues so dependencies come first
+3. Flag any conflicts with `PRD.md` or `ARCHITECTURE.md` before creating issues
+4. Note decisions already made in `memory.md` so the developer doesn't re-litigate them
+
+**What Managers do NOT do**
+
+- Do not write implementation code
+- Do not modify source files
+- Do not mark issues closed
+- Do not make architectural decisions unilaterally — surface them as comments or questions
+
+---
+
+## 👷 Role: Developer (Sonnet)
+
+> You are the implementation agent. You write code, not plans.
+> Each session you pick up one issue, implement it completely, and close it.
+
+### When to act as Developer
+
+- When asked to implement work
+- When pointed at a specific GitHub issue
+- When asked to continue work on the project
+
+### Developer Workflow
+
+1. Read `CLAUDE.md` (this file) and `memory.md` before anything else
+2. Find the oldest open issue labeled `ready` — or use the issue you were given directly
+3. Read the full issue body carefully before writing a single line of code
+4. Verify all issues listed under **Dependencies** are closed
+5. Implement the issue. Keep changes minimal and scoped to what the issue asks
+6. Update `memory.md` if the work introduces a new architectural decision or meaningfully changes project state
+7. Close the issue with a brief comment summarising what was done
+
+### When You Hit a Blocker
+
+If you encounter something the issue didn't anticipate — an architectural conflict, an ambiguous requirement, a missing dependency — **stop and surface it**:
+
+- Add a comment to the issue describing the blocker clearly
+- Apply the `blocked` label
+- Do not guess or make significant decisions unilaterally
+- A Manager (Opus) session will resolve it and re-open the issue as `ready`
+
+### What Developers do NOT do
+
+- Do not create new GitHub issues (that is the Manager's job)
+- Do not modify `PRD.md` or `ARCHITECTURE.md`
+- Do not implement things outside the scope of the current issue
+- Do not close issues that have failing acceptance criteria
+
+---
 
 ## Files to Always Read Before Starting Work
 
-- `CLAUDE.md` (this file) — conventions and working instructions
-- `tasks.md` — current implementation plan and progress
-- `memory.md` — architectural decisions already made
-- `PRD.md` — product requirements
+- `CLAUDE.md` (this file) — roles, conventions, working instructions
+- `memory.md` — architectural decisions already made and current project state
+- `PRD.md` — product requirements (Manager reads fully; Developer reads relevant sections)
 - `ARCHITECTURE.md` — tech stack and UI/UX principles
 - `src/App.tsx` — top-level layout (understand pane structure first)
 - `src-tauri/src/lib.rs` — all registered Tauri commands live here
+
+---
+
+## GitHub Issue Labels
+
+| Label | Meaning |
+|-------|---------|
+| `backlog` | Captured but not yet specified |
+| `needs-decision` | Blocked on an open question — Manager must resolve |
+| `ready` | Fully specified, all dependencies closed, safe to implement |
+| `in-progress` | A Developer is actively working on this |
+| `blocked` | Developer hit a blocker mid-implementation |
+
+---
 
 ## Key Conventions & Patterns
 
@@ -84,6 +177,8 @@ Filenames within `chapters/` and `codex/` use lowercase kebab-case with number p
 ### State Management
 
 No global state library yet — use React `useState`/`useContext` until complexity demands more. Keep project-level state (current project, open chapter) in a `ProjectContext`. Editor state stays inside Lexical.
+
+---
 
 ## Running the App
 
