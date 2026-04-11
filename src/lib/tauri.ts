@@ -3,8 +3,9 @@ import type {
   Project,
   Chapter,
   CodexEntry,
-  OutlineItem,
   FileEntry,
+  Sticky,
+  StickyCategory,
 } from '../types';
 
 // --- Project ---
@@ -62,23 +63,6 @@ export function reorderChapters(
   return invoke('reorder_chapters', { projectPath, filenames });
 }
 
-// --- Outline ---
-
-export function readOutline(
-  projectPath: string,
-  chapterFilename: string,
-): Promise<OutlineItem[]> {
-  return invoke('read_outline', { projectPath, chapterFilename });
-}
-
-export function saveOutline(
-  projectPath: string,
-  chapterFilename: string,
-  items: OutlineItem[],
-): Promise<void> {
-  return invoke('save_outline', { projectPath, chapterFilename, items });
-}
-
 // --- Raw files ---
 
 export function listProjectFiles(projectPath: string): Promise<FileEntry[]> {
@@ -134,4 +118,53 @@ export function deleteCodexEntry(
   filename: string,
 ): Promise<void> {
   return invoke('delete_codex_entry', { projectPath, category, filename });
+}
+
+// --- Stickies ---
+
+export function readStickies(projectPath: string, chapterFilename: string): Promise<Sticky[]> {
+  return invoke('read_stickies', { projectPath, chapterFilename });
+}
+
+export function saveStickies(
+  projectPath: string,
+  chapterFilename: string,
+  stickies: Sticky[],
+): Promise<void> {
+  return invoke('save_stickies', { projectPath, chapterFilename, stickies });
+}
+
+export function deleteSticky(
+  projectPath: string,
+  chapterFilename: string,
+  stickyId: string,
+): Promise<void> {
+  return invoke('delete_sticky', { projectPath, chapterFilename, stickyId });
+}
+
+// --- Categories ---
+
+export function listCategories(projectPath: string): Promise<StickyCategory[]> {
+  return invoke('list_categories', { projectPath });
+}
+
+export function addCategory(
+  projectPath: string,
+  name: string,
+  color: string,
+): Promise<StickyCategory> {
+  return invoke('add_category', { projectPath, name, color });
+}
+
+export function updateCategory(
+  projectPath: string,
+  categoryId: string,
+  name: string,
+  color: string,
+): Promise<StickyCategory> {
+  return invoke('update_category', { projectPath, categoryId, name, color });
+}
+
+export function deleteCategory(projectPath: string, categoryId: string): Promise<void> {
+  return invoke('delete_category', { projectPath, categoryId });
 }

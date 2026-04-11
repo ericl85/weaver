@@ -3,6 +3,25 @@ use std::fs;
 use std::path::Path;
 use uuid::Uuid;
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StickyCategory {
+    pub id: String,
+    pub name: String,
+    pub color: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Sticky {
+    pub id: String,
+    pub chapter_id: String,
+    pub text: String,
+    pub category_id: String,
+    pub anchor_id: Option<String>,
+    pub created_at: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
@@ -13,6 +32,8 @@ pub struct Project {
     pub root_path: String,
     #[serde(default)]
     pub chapters: Vec<String>,
+    #[serde(default)]
+    pub sticky_categories: Vec<StickyCategory>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -31,25 +52,6 @@ pub struct CodexEntry {
     pub title: String,
     pub category: String,
     pub filename: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum OutlineItemType {
-    Note,
-    Todo,
-    Feedback,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct OutlineItem {
-    pub id: String,
-    pub chapter_id: String,
-    pub text: String,
-    pub anchor_id: String,
-    #[serde(rename = "type")]
-    pub item_type: OutlineItemType,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -83,12 +85,19 @@ fn create_project(title: String, author: String, path: String) -> Result<Project
 
     // Create directory tree
     fs::create_dir_all(root.join("chapters")).map_err(|e| e.to_string())?;
+    fs::create_dir_all(root.join("stickies")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/characters")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/places")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/items")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("themes")).map_err(|e| e.to_string())?;
 
     let now = chrono::Utc::now().to_rfc3339();
+    let default_categories = vec![
+        StickyCategory { id: Uuid::new_v4().to_string(), name: "Note".to_string(), color: "zinc".to_string() },
+        StickyCategory { id: Uuid::new_v4().to_string(), name: "Research".to_string(), color: "blue".to_string() },
+        StickyCategory { id: Uuid::new_v4().to_string(), name: "Reader Feedback".to_string(), color: "amber".to_string() },
+        StickyCategory { id: Uuid::new_v4().to_string(), name: "Continuity".to_string(), color: "emerald".to_string() },
+    ];
     let project = Project {
         id: Uuid::new_v4().to_string(),
         title: title.clone(),
@@ -96,6 +105,7 @@ fn create_project(title: String, author: String, path: String) -> Result<Project
         created: now,
         root_path: root.to_string_lossy().to_string(),
         chapters: vec![],
+        sticky_categories: default_categories,
     };
 
     let json = serde_json::to_string_pretty(&project).map_err(|e| e.to_string())?;
@@ -246,12 +256,11 @@ fn rename_chapter(
             chapters_dir.join(&new_filename),
         )
         .map_err(|e| e.to_string())?;
-        let old_notes =
-            chapters_dir.join(format!("{}.notes.json", filename.trim_end_matches(".md")));
-        if old_notes.exists() {
-            let new_notes = chapters_dir
-                .join(format!("{}.notes.json", new_filename.trim_end_matches(".md")));
-            fs::rename(old_notes, new_notes).map_err(|e| e.to_string())?;
+        // Rename stickies sidecar in stickies/
+        let old_stickies = stickies_path(&project_path, &filename);
+        if old_stickies.exists() {
+            let new_stickies = stickies_path(&project_path, &new_filename);
+            fs::rename(old_stickies, new_stickies).map_err(|e| e.to_string())?;
         }
         project.chapters[idx] = new_filename.clone();
         write_project_json(&project_path, &project)?;
@@ -280,10 +289,10 @@ fn delete_chapter(project_path: String, filename: String) -> Result<(), String> 
     write_project_json(&project_path, &project)?;
 
     fs::remove_file(chapters_dir.join(&filename)).map_err(|e| e.to_string())?;
-    let notes =
-        chapters_dir.join(format!("{}.notes.json", filename.trim_end_matches(".md")));
-    if notes.exists() {
-        fs::remove_file(notes).map_err(|e| e.to_string())?;
+    // Clean up stickies sidecar in stickies/
+    let stickies_file = stickies_path(&project_path, &filename);
+    if stickies_file.exists() {
+        fs::remove_file(stickies_file).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -304,17 +313,18 @@ fn reorder_chapters(project_path: String, filenames: Vec<String>) -> Result<(), 
     write_project_json(&project_path, &project)
 }
 
-// --- Outline/notes CRUD commands ---
+// --- Sticky CRUD commands ---
+
+fn stickies_path(project_path: &str, chapter_filename: &str) -> std::path::PathBuf {
+    let stem = chapter_filename.trim_end_matches(".md");
+    Path::new(project_path)
+        .join("stickies")
+        .join(format!("{}.stickies.json", stem))
+}
 
 #[tauri::command]
-fn read_outline(
-    project_path: String,
-    chapter_filename: String,
-) -> Result<Vec<OutlineItem>, String> {
-    let stem = chapter_filename.trim_end_matches(".md");
-    let path = Path::new(&project_path)
-        .join("chapters")
-        .join(format!("{}.notes.json", stem));
+fn read_stickies(project_path: String, chapter_filename: String) -> Result<Vec<Sticky>, String> {
+    let path = stickies_path(&project_path, &chapter_filename);
     if !path.exists() {
         return Ok(vec![]);
     }
@@ -323,18 +333,100 @@ fn read_outline(
 }
 
 #[tauri::command]
-fn save_outline(
+fn save_stickies(
     project_path: String,
     chapter_filename: String,
-    items: Vec<OutlineItem>,
+    stickies: Vec<Sticky>,
 ) -> Result<(), String> {
-    let stem = chapter_filename.trim_end_matches(".md");
-    let dir = Path::new(&project_path).join("chapters");
-    let dest = dir.join(format!("{}.notes.json", stem));
-    let tmp = dir.join(format!("{}.notes.json.tmp", stem));
-    let json = serde_json::to_string_pretty(&items).map_err(|e| e.to_string())?;
+    let path = stickies_path(&project_path, &chapter_filename);
+    // Ensure stickies/ directory exists
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let tmp = path.with_extension("json.tmp");
+    let json = serde_json::to_string_pretty(&stickies).map_err(|e| e.to_string())?;
     fs::write(&tmp, json).map_err(|e| e.to_string())?;
-    fs::rename(&tmp, &dest).map_err(|e| e.to_string())
+    fs::rename(&tmp, &path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_sticky(
+    project_path: String,
+    chapter_filename: String,
+    sticky_id: String,
+) -> Result<(), String> {
+    let path = stickies_path(&project_path, &chapter_filename);
+    let mut stickies: Vec<Sticky> = if path.exists() {
+        let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        serde_json::from_str(&content).map_err(|e| e.to_string())?
+    } else {
+        vec![]
+    };
+    let before = stickies.len();
+    stickies.retain(|s| s.id != sticky_id);
+    if stickies.len() == before {
+        return Err(format!("Sticky not found: {}", sticky_id));
+    }
+    let tmp = path.with_extension("json.tmp");
+    let json = serde_json::to_string_pretty(&stickies).map_err(|e| e.to_string())?;
+    fs::write(&tmp, json).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, &path).map_err(|e| e.to_string())
+}
+
+// --- Category management commands ---
+
+#[tauri::command]
+fn list_categories(project_path: String) -> Result<Vec<StickyCategory>, String> {
+    let project = read_project_json(&project_path)?;
+    Ok(project.sticky_categories)
+}
+
+#[tauri::command]
+fn add_category(
+    project_path: String,
+    name: String,
+    color: String,
+) -> Result<StickyCategory, String> {
+    let mut project = read_project_json(&project_path)?;
+    let category = StickyCategory {
+        id: Uuid::new_v4().to_string(),
+        name,
+        color,
+    };
+    project.sticky_categories.push(category.clone());
+    write_project_json(&project_path, &project)?;
+    Ok(category)
+}
+
+#[tauri::command]
+fn update_category(
+    project_path: String,
+    category_id: String,
+    name: String,
+    color: String,
+) -> Result<StickyCategory, String> {
+    let mut project = read_project_json(&project_path)?;
+    let cat = project
+        .sticky_categories
+        .iter_mut()
+        .find(|c| c.id == category_id)
+        .ok_or_else(|| format!("Category not found: {}", category_id))?;
+    cat.name = name;
+    cat.color = color;
+    let updated = cat.clone();
+    write_project_json(&project_path, &project)?;
+    Ok(updated)
+}
+
+#[tauri::command]
+fn delete_category(project_path: String, category_id: String) -> Result<(), String> {
+    let mut project = read_project_json(&project_path)?;
+    let before = project.sticky_categories.len();
+    project.sticky_categories.retain(|c| c.id != category_id);
+    if project.sticky_categories.len() == before {
+        return Err(format!("Category not found: {}", category_id));
+    }
+    write_project_json(&project_path, &project)
 }
 
 // --- Raw file commands ---
@@ -505,8 +597,6 @@ pub fn run() {
             rename_chapter,
             delete_chapter,
             reorder_chapters,
-            read_outline,
-            save_outline,
             list_project_files,
             read_raw_file,
             save_raw_file,
@@ -515,6 +605,13 @@ pub fn run() {
             save_codex_entry,
             create_codex_entry,
             delete_codex_entry,
+            read_stickies,
+            save_stickies,
+            delete_sticky,
+            list_categories,
+            add_category,
+            update_category,
+            delete_category,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

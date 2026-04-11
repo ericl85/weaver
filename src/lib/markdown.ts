@@ -5,37 +5,64 @@ import {
   type TextMatchTransformer,
 } from '@lexical/markdown';
 import type { EditorState, LexicalEditor } from 'lexical';
-import { AnchorNode, $createAnchorNode, $isAnchorNode } from '../nodes/AnchorNode';
+import {
+  StickyAnchorNode,
+  $createStickyAnchorNode,
+  $isStickyAnchorNode,
+} from '../nodes/StickyAnchorNode';
 
 /**
- * Handles <!-- weaver-anchor:UUID --> comment markers.
+ * Handles <!-- weaver-sticky:UUID --> comment markers.
  *
- * Import: when a `<!-- weaver-anchor:UUID -->` text sequence is encountered in
- * the Markdown source, it is replaced with an invisible AnchorNode.
+ * Import: when a `<!-- weaver-sticky:UUID -->` text sequence is encountered in
+ * the Markdown source, it is replaced with an invisible StickyAnchorNode.
  *
- * Export: when an AnchorNode is encountered during serialization, it is
- * written back as `<!-- weaver-anchor:UUID -->`.
+ * Export: when a StickyAnchorNode is encountered during serialization, it is
+ * written back as `<!-- weaver-sticky:UUID -->`.
  */
-const AnchorTransformer: TextMatchTransformer = {
+const StickyAnchorTransformer: TextMatchTransformer = {
   type: 'text-match',
-  dependencies: [AnchorNode],
+  dependencies: [StickyAnchorNode],
 
   // Used when importing Markdown from disk
-  importRegExp: /<!--\s*weaver-anchor:([0-9a-f-]{36})\s*-->/,
+  importRegExp: /<!--\s*weaver-sticky:([0-9a-f-]{36})\s*-->/,
 
   // Used by the MarkdownShortcuts plugin when typing in the editor (trigger = last char)
+  regExp: /<!--\s*weaver-sticky:([0-9a-f-]{36})\s*-->$/,
+  trigger: '>',
+
+  replace(textNode, match) {
+    const anchorId = match[1];
+    textNode.replace($createStickyAnchorNode(anchorId));
+  },
+
+  export(node) {
+    if ($isStickyAnchorNode(node)) {
+      return `<!-- weaver-sticky:${node.__anchorId} -->`;
+    }
+    return null;
+  },
+};
+
+/**
+ * Backwards-compatibility transformer for the old <!-- weaver-anchor:UUID --> format.
+ * On import, converts old markers to StickyAnchorNodes so existing projects open
+ * without data loss. On next save the new format is written. No export rule needed.
+ */
+const LegacyAnchorTransformer: TextMatchTransformer = {
+  type: 'text-match',
+  dependencies: [StickyAnchorNode],
+
+  importRegExp: /<!--\s*weaver-anchor:([0-9a-f-]{36})\s*-->/,
   regExp: /<!--\s*weaver-anchor:([0-9a-f-]{36})\s*-->$/,
   trigger: '>',
 
   replace(textNode, match) {
     const anchorId = match[1];
-    textNode.replace($createAnchorNode(anchorId));
+    textNode.replace($createStickyAnchorNode(anchorId));
   },
 
-  export(node) {
-    if ($isAnchorNode(node)) {
-      return `<!-- weaver-anchor:${node.__anchorId} -->`;
-    }
+  export() {
     return null;
   },
 };
@@ -46,7 +73,11 @@ const AnchorTransformer: TextMatchTransformer = {
  * This is the extension point for future Pandoc-specific transformers
  * (footnotes, citations, etc.) — add them here, nowhere else.
  */
-export const WEAVER_TRANSFORMERS = [...TRANSFORMERS, AnchorTransformer];
+export const WEAVER_TRANSFORMERS = [
+  ...TRANSFORMERS,
+  StickyAnchorTransformer,
+  LegacyAnchorTransformer,
+];
 
 /**
  * Load a Markdown string into the given editor, replacing its current content.

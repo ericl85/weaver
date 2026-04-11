@@ -15,7 +15,7 @@ import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode, CodeHighlightNode } from "@lexical/code";
 import { LinkNode, AutoLinkNode } from "@lexical/link";
 import type { EditorState } from "lexical";
-import { AnchorNode } from "./nodes/AnchorNode";
+import { StickyAnchorNode } from "./nodes/StickyAnchorNode";
 import { useEditor } from "./contexts/EditorContext";
 import {
   markdownToEditorState,
@@ -150,7 +150,7 @@ export default function Editor({
     theme,
     onError,
     nodes: [
-      AnchorNode,
+      StickyAnchorNode,
       HeadingNode,
       QuoteNode,
       ListNode,

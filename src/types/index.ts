@@ -1,3 +1,18 @@
+export interface StickyCategory {
+  id: string;
+  name: string;
+  color: string; // Tailwind color name, e.g. "amber", "blue", "emerald", "zinc"
+}
+
+export interface Sticky {
+  id: string;
+  chapterId: string;
+  text: string;
+  categoryId: string;
+  anchorId: string | null; // null = unattached; string = UUID matching <!-- weaver-sticky:{id} -->
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -5,6 +20,7 @@ export interface Project {
   created: string;
   rootPath: string;
   chapters: string[];
+  stickyCategories: StickyCategory[];
 }
 
 export interface Chapter {
@@ -20,14 +36,6 @@ export interface CodexEntry {
   title: string;
   category: string;
   filename: string;
-}
-
-export interface OutlineItem {
-  id: string;
-  chapterId: string;
-  text: string;
-  anchorId: string;
-  type: 'note' | 'todo' | 'feedback';
 }
 
 export interface FileEntry {
