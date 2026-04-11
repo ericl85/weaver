@@ -1,24 +1,20 @@
 import { useState } from 'react';
 import SidebarIcon from './SidebarIcon';
-import OutlinePanel from './panels/OutlinePanel';
+import StickyPanel from './panels/StickyPanel';
 
-type PanelId = 'outline' | 'codex' | 'ai';
+type PanelId = 'stickies' | 'codex' | 'ai';
 
 const PANEL_LABELS: Record<PanelId, string> = {
-  outline: 'Outline',
+  stickies: 'Sticky Notes',
   codex: 'Codex',
   ai: 'AI Assistant',
 };
 
 // Minimal SVG icons (24×24 viewBox, stroke-based)
-const OutlineIcon = () => (
+const StickyNoteIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="8" y1="6" x2="21" y2="6" />
-    <line x1="8" y1="12" x2="21" y2="12" />
-    <line x1="8" y1="18" x2="21" y2="18" />
-    <circle cx="3" cy="6" r="1" fill="currentColor" stroke="none" />
-    <circle cx="3" cy="12" r="1" fill="currentColor" stroke="none" />
-    <circle cx="3" cy="18" r="1" fill="currentColor" stroke="none" />
+    <path d="M15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9z" />
+    <polyline points="15 3 15 9 21 9" />
   </svg>
 );
 
@@ -36,20 +32,16 @@ const AIIcon = () => (
 );
 
 const PANEL_ICONS: Record<PanelId, React.ReactNode> = {
-  outline: <OutlineIcon />,
+  stickies: <StickyNoteIcon />,
   codex: <CodexIcon />,
   ai: <AIIcon />,
 };
 
-const PANELS: PanelId[] = ['outline', 'codex', 'ai'];
+const PANELS: PanelId[] = ['stickies', 'codex', 'ai'];
 
-export interface SidebarPanelProps {
-  activePanel: PanelId | null;
-}
-
-// Panel slot — T-016, T-022 will fill in codex/ai
+// Panel slot — T-022 will fill in codex/ai
 function PanelContent({ panel }: { panel: PanelId }) {
-  if (panel === 'outline') return <OutlinePanel />;
+  if (panel === 'stickies') return <StickyPanel />;
   return (
     <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
       {PANEL_LABELS[panel]} — coming soon

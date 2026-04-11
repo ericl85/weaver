@@ -4,6 +4,7 @@ import { EditorProvider } from './contexts/EditorContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { WordCountProvider } from './contexts/WordCountContext';
+import { StickyProvider } from './contexts/StickyContext';
 import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
@@ -103,9 +104,11 @@ export default function App() {
       <ThemeProvider>
         <ProjectProvider>
           <EditorProvider>
-            <WordCountProvider>
-              <AppShell />
-            </WordCountProvider>
+            <StickyProvider>
+              <WordCountProvider>
+                <AppShell />
+              </WordCountProvider>
+            </StickyProvider>
           </EditorProvider>
         </ProjectProvider>
       </ThemeProvider>
