@@ -129,6 +129,22 @@ function getRectFromCollapsedRange(range: Range): DOMRect | null {
 // ---------------------------------------------------------------------------
 
 /**
+ * Scan a DOM node's own properties for any __lexicalKey_* entry.
+ * Lexical sets `dom[__lexicalKey_${editor._key}] = nodeKey` directly on the
+ * element — a UUID suffix we can't know upfront — so we scan instead of
+ * constructing the name.
+ */
+function getLexicalKeyFromDOMNode(node: Node): string | undefined {
+  const props = node as unknown as Record<string, unknown>;
+  for (const key of Object.keys(props)) {
+    if (key.startsWith('__lexicalKey_')) {
+      return props[key] as string;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Bridges a native DOM Range (from caretRangeFromPoint) into a Lexical
  * RangeSelection and sets it as the active selection.
  * Must be called inside editor.update().
@@ -138,19 +154,14 @@ function $setSelectionFromRange(caretRange: Range): boolean {
   const container = caretRange.startContainer;
   const offset = caretRange.startOffset;
 
-  // Walk up the DOM to find the element tagged with a Lexical node key.
-  // Lexical tags its DOM nodes with __lexicalKey_{namespace}.
+  // Walk up the DOM scanning for any __lexicalKey_* property (UUID suffix varies
+  // per editor instance and is not derived from the namespace string).
   let node: Node | null = container;
   let lexicalKey: string | undefined;
 
   while (node) {
-    const key = (node as unknown as Record<string, unknown>)['__lexicalKey_WeaverEditor'] as
-      | string
-      | undefined;
-    if (key !== undefined) {
-      lexicalKey = key;
-      break;
-    }
+    lexicalKey = getLexicalKeyFromDOMNode(node);
+    if (lexicalKey !== undefined) break;
     node = node.parentElement;
   }
 
@@ -248,6 +259,8 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
   const latestPointer = useRef<{ x: number; y: number } | null>(null);
   const latestOverId = useRef<string | null>(null);
   const dragColor = useRef<string>('zinc');
+  // Last caret range successfully resolved during drag (before the overlay settles at drop position)
+  const lastValidCaretRange = useRef<Range | null>(null);
 
   function colorForDragData(data: DragData): string {
     if (data.type === 'sticky') {
@@ -277,6 +290,9 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
       setDropCursor(null);
       return;
     }
+    // Store the last valid range — the overlay hasn't moved here yet, so this
+    // range points into the editor. We reuse it on drop instead of re-querying.
+    lastValidCaretRange.current = caretRange;
     setDropCursor({
       x: rect.left,
       y: rect.top,
@@ -324,18 +340,19 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
     },
 
     onDragEnd(event) {
+      // Reuse the last caret range from the RAF — at that point the DragOverlay
+      // hadn't yet moved to the final cursor position, so caretRangeFromPoint
+      // hit editor text correctly. By drop time the overlay has settled at the
+      // cursor and would intercept a fresh hit-test.
+      const caretRange = lastValidCaretRange.current;
+
       rafScheduled.current = false;
       latestPointer.current = null;
+      lastValidCaretRange.current = null;
       setDropCursor(null);
 
       // Only act on drops over this editor's dropzone
       if (!event.over || event.over.id !== dropzoneId) return;
-
-      const activatorEvent = event.activatorEvent as PointerEvent;
-      const x = activatorEvent.clientX + event.delta.x;
-      const y = activatorEvent.clientY + event.delta.y;
-
-      const caretRange = getCaretRangeAtPoint(x, y);
       if (!caretRange) return;
 
       const data = event.active.data.current;
@@ -385,6 +402,7 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
     onDragCancel() {
       rafScheduled.current = false;
       latestPointer.current = null;
+      lastValidCaretRange.current = null;
       setDropCursor(null);
     },
   });
