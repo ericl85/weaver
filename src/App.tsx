@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { WordCountProvider } from './contexts/WordCountContext';
 import { StickyProvider } from './contexts/StickyContext';
+import DndProvider from './components/DndProvider';
 import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
 import LeftPane from './components/LeftPane';
@@ -105,9 +106,11 @@ export default function App() {
         <ProjectProvider>
           <EditorProvider>
             <StickyProvider>
-              <WordCountProvider>
-                <AppShell />
-              </WordCountProvider>
+              <DndProvider>
+                <WordCountProvider>
+                  <AppShell />
+                </WordCountProvider>
+              </DndProvider>
             </StickyProvider>
           </EditorProvider>
         </ProjectProvider>

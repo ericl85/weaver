@@ -24,7 +24,11 @@ export default function ChapterEditorLayer({
 }: ChapterEditorLayerProps) {
   return (
     <div className={visible ? 'absolute inset-0 flex flex-col' : 'hidden'}>
-      <Editor initialContent={initialContent} onContentChange={onContentChange} />
+      <Editor
+        initialContent={initialContent}
+        onContentChange={onContentChange}
+        filename={_chapter.filename}
+      />
     </div>
   );
 }

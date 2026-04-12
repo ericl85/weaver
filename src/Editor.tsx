@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -17,6 +18,7 @@ import { LinkNode, AutoLinkNode } from "@lexical/link";
 import type { EditorState } from "lexical";
 import { StickyAnchorNode } from "./nodes/StickyAnchorNode";
 import { useEditor } from "./contexts/EditorContext";
+import StickyDndBridgePlugin from "./plugins/StickyDndBridgePlugin";
 import {
   markdownToEditorState,
   editorStateToMarkdown,
@@ -139,11 +141,14 @@ function InitialContentPlugin({
 export interface EditorProps {
   initialContent: string;
   onContentChange: (markdown: string) => void;
+  /** Filename of the chapter this instance is bound to; used for the dnd-kit droppable ID. */
+  filename?: string;
 }
 
 export default function Editor({
   initialContent,
   onContentChange,
+  filename,
 }: EditorProps) {
   const initialConfig = {
     namespace: "WeaverEditor",
@@ -164,12 +169,19 @@ export default function Editor({
 
   const { theme: appTheme } = useTheme();
 
+  const dropzoneId = filename ? `editor-dropzone-${filename}` : 'editor-dropzone';
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: dropzoneId });
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       {/* flex-1 + min-h-0 so this fills the parent flex column without overflowing */}
       <div className="flex-1 flex flex-col min-h-0">
         <EditorToolbar />
-        <div className="flex-1 overflow-y-auto min-h-0 flex justify-center">
+        <div
+          ref={setDropRef}
+          data-weaver-dropzone={dropzoneId}
+          className={`flex-1 overflow-y-auto min-h-0 flex justify-center${isOver ? ' ring-1 ring-inset ring-blue-400/20' : ''}`}
+        >
           <div
             className={`relative w-full max-w-3xl px-8 py-12 lg:px-12 ${appTheme.textAlign === "justify" ? "text-justify" : ""}`}
           >
@@ -196,6 +208,7 @@ export default function Editor({
           onContentChange={onContentChange}
         />
         <EditorRefPlugin />
+        <StickyDndBridgePlugin dropzoneId={dropzoneId} />
       </div>
     </LexicalComposer>
   );

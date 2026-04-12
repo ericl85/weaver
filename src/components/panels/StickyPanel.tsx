@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useDraggable } from '@dnd-kit/core';
 import { useStickyContext } from '../../contexts/StickyContext';
 import { useProject } from '../../contexts/ProjectContext';
 import { saveStickies } from '../../lib/tauri';
@@ -131,6 +132,11 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
   const colors = categoryColorClasses(color);
   const isUnattached = sticky.anchorId === null;
 
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
+    id: `sticky-${sticky.id}`,
+    data: { type: 'sticky', stickyId: sticky.id } satisfies { type: 'sticky'; stickyId: string },
+  });
+
   function startEdit() {
     setEditText(sticky.text);
     setEditing(true);
@@ -156,11 +162,21 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
   return (
     <Card
       className={`group relative transition-opacity ${cardClass} ${highlighted ? 'outline outline-1 outline-zinc-400' : ''}`}
-      style={{ opacity }}
+      style={{ opacity: isDragging ? 0.4 : opacity }}
     >
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className={`flex items-center gap-1 text-xs ${colors.text}`}>
+          {/* Drag handle */}
+          <span
+            ref={setDragRef}
+            {...listeners}
+            {...attributes}
+            className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 mr-0.5 select-none"
+            title="Drag to anchor in manuscript"
+          >
+            ⠿
+          </span>
           <span className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`} />
           {category?.name ?? 'Unknown'}
         </div>

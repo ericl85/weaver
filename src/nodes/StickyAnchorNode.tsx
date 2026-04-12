@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EditorConfig, LexicalEditor, NodeKey, SerializedLexicalNode, Spread } from 'lexical';
 import { DecoratorNode } from 'lexical';
+import { useDraggable } from '@dnd-kit/core';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { useStickyContext } from '../contexts/StickyContext';
 
@@ -42,6 +43,11 @@ function StickyBadge({ anchorId }: StickyBadgeProps) {
   const { anchorMap, highlightSticky, badgesVisible } = useStickyContext();
   const entry = anchorMap.get(anchorId);
 
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `anchor-${anchorId}`,
+    data: { type: 'anchor-move', anchorId } satisfies { type: 'anchor-move'; anchorId: string },
+  });
+
   if (!badgesVisible || !entry) {
     // Keep a zero-size element so the node has a mount point but takes no space
     return <span className="inline-block w-0 h-0 overflow-hidden" />;
@@ -54,7 +60,10 @@ function StickyBadge({ anchorId }: StickyBadgeProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            className={`inline-block w-2.5 h-2.5 rounded-full ${colorToBg(entry.categoryColor)} cursor-pointer hover:scale-125 transition-transform align-middle mx-0.5`}
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            className={`inline-block w-2.5 h-2.5 rounded-full ${colorToBg(entry.categoryColor)} cursor-grab active:cursor-grabbing hover:scale-125 transition-transform align-middle mx-0.5 ${isDragging ? 'opacity-30' : ''}`}
             onClick={() => highlightSticky(entry.stickyId)}
           />
         </TooltipTrigger>
