@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use uuid::Uuid;
+use tauri::Emitter;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -586,6 +587,72 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Install a native macOS menu bar with Weaver-specific actions.
+            // On Windows/Linux we keep our custom titlebar, so decorations must stay off.
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::menu::{MenuBuilder, MenuItem, PredefinedMenuItem, SubmenuBuilder};
+
+                // File submenu
+                let new_project = MenuItem::with_id(app, "new-project", "New Project", true, None::<&str>)?;
+                let open_project = MenuItem::with_id(app, "open-project", "Open Project", true, None::<&str>)?;
+                let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
+                let close_project = MenuItem::with_id(app, "close-project", "Close Project", true, None::<&str>)?;
+                let sep1 = PredefinedMenuItem::separator(app)?;
+                let sep2 = PredefinedMenuItem::separator(app)?;
+                let quit = PredefinedMenuItem::quit(app, Some("Quit Weaver"))?;
+                let file_menu = SubmenuBuilder::new(app, "File")
+                    .items(&[&new_project, &open_project, &sep1, &save, &close_project, &sep2, &quit])
+                    .build()?;
+
+                // Edit submenu — all predefined so the OS wires up Cmd+Z/X/C/V etc.
+                let undo = PredefinedMenuItem::undo(app, None)?;
+                let redo = PredefinedMenuItem::redo(app, None)?;
+                let cut = PredefinedMenuItem::cut(app, None)?;
+                let copy = PredefinedMenuItem::copy(app, None)?;
+                let paste = PredefinedMenuItem::paste(app, None)?;
+                let select_all = PredefinedMenuItem::select_all(app, None)?;
+                let edit_sep = PredefinedMenuItem::separator(app)?;
+                let edit_menu = SubmenuBuilder::new(app, "Edit")
+                    .items(&[&undo, &redo, &edit_sep, &cut, &copy, &paste, &select_all])
+                    .build()?;
+
+                // View submenu
+                let fullscreen = PredefinedMenuItem::fullscreen(app, None)?;
+                let view_menu = SubmenuBuilder::new(app, "View")
+                    .items(&[&fullscreen])
+                    .build()?;
+
+                // Window submenu
+                let minimize = PredefinedMenuItem::minimize(app, None)?;
+                let close_window = PredefinedMenuItem::close_window(app, None)?;
+                let window_menu = SubmenuBuilder::new(app, "Window")
+                    .items(&[&minimize, &close_window])
+                    .build()?;
+
+                let menu = MenuBuilder::new(app)
+                    .items(&[&file_menu, &edit_menu, &view_menu, &window_menu])
+                    .build()?;
+                app.set_menu(menu)?;
+            }
+
+            // tauri.conf.json sets decorations:true (required for macOS native traffic lights).
+            // On Windows/Linux that would restore the native titlebar — disable it here.
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    window.set_decorations(false)?;
+                }
+            }
+
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            // Forward native menu item clicks to the frontend as a Tauri event.
+            let id = event.id().as_ref().to_string();
+            let _ = app.emit("weaver://menu", id);
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             create_project,

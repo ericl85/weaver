@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useProject } from '../contexts/ProjectContext';
+import { usePlatform } from '../hooks/usePlatform';
 
 const appWindow = getCurrentWindow();
 
@@ -40,6 +41,7 @@ export default function TitleBar({
   const { project, setProject } = useProject();
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const isMac = usePlatform() === 'macos';
 
   // Close menu on outside click
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function TitleBar({
   return (
     <div
       ref={barRef}
-      className="h-8 shrink-0 flex items-stretch bg-zinc-800 border-b border-zinc-700 select-none"
+      className={`h-8 shrink-0 flex items-stretch bg-zinc-800 border-b border-zinc-700 select-none${isMac ? ' pl-[72px]' : ''}`}
       data-tauri-drag-region
     >
       {/* Branding */}
@@ -122,8 +124,8 @@ export default function TitleBar({
         Weaver
       </div>
 
-      {/* Menu bar */}
-      <div className="flex items-stretch" data-tauri-drag-region="false">
+      {/* Menu bar — hidden on macOS (native menu bar used instead) */}
+      {!isMac && <div className="flex items-stretch" data-tauri-drag-region="false">
         {menuOrder.map(id => (
           <div key={id} className="relative">
             <button
@@ -165,13 +167,13 @@ export default function TitleBar({
             )}
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Drag region spacer */}
       <div className="flex-1" data-tauri-drag-region />
 
-      {/* Window controls */}
-      <div className="flex items-stretch">
+      {/* Window controls — hidden on macOS (native traffic lights used instead) */}
+      {!isMac && <div className="flex items-stretch">
         <button
           title="Minimize"
           className="w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
@@ -200,7 +202,7 @@ export default function TitleBar({
             <line x1="10" y1="0" x2="0" y2="10" />
           </svg>
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

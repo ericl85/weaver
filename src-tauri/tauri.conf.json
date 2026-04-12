@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "weaver",
+  "productName": "Weaver",
   "version": "0.1.0",
   "identifier": "com.lundee.weaver",
   "build": {
@@ -12,12 +12,14 @@
   "app": {
     "windows": [
       {
-        "title": "weaver",
+        "title": "Weaver",
         "width": 1280,
         "height": 800,
         "minWidth": 900,
         "minHeight": 600,
-        "decorations": false
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {

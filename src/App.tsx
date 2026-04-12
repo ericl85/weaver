@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { ProjectProvider, useProject } from './contexts/ProjectContext';
 import { EditorProvider } from './contexts/EditorContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -33,6 +34,23 @@ function AppShell() {
     // Close current project to return to WelcomeScreen open-project flow
     setProject(null);
   }
+
+  // Forward native macOS menu events to the same action handlers used by the
+  // custom dropdown menu on Windows/Linux.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    listen<string>('weaver://menu', (e) => {
+      switch (e.payload) {
+        case 'new-project': handleNewProject(); break;
+        case 'open-project': handleOpenProject(); break;
+        case 'save':
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
+          break;
+        case 'close-project': setProject(null); break;
+      }
+    }).then(fn => { unlisten = fn; });
+    return () => { unlisten?.(); };
+  }, []);
 
   const titleBar = (
     <TitleBar
