@@ -1,16 +1,149 @@
 import { useState, useEffect, useRef } from 'react';
 import { useProject } from '../contexts/ProjectContext';
 import { useWordCount } from '../contexts/WordCountContext';
-import type { CodexEntry } from '../types';
+import type { Chapter, CodexEntry } from '../types';
 import {
   createChapter,
   renameChapter,
   deleteChapter,
   listCodex,
 } from '../lib/tauri';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface Props {
   onChapterClick?: () => void;
+}
+
+interface SortableChapterItemProps {
+  chapter: Chapter;
+  isActive: boolean;
+  isRenaming: boolean;
+  wordCount: number | undefined;
+  renameValue: string;
+  renameInputRef: React.RefObject<HTMLInputElement | null>;
+  onSelect: () => void;
+  onStartRename: () => void;
+  onRenameChange: (value: string) => void;
+  onRenameSubmit: () => void;
+  onRenameCancel: () => void;
+  onDeleteRequest: () => void;
+}
+
+function SortableChapterItem({
+  chapter,
+  isActive,
+  isRenaming,
+  wordCount,
+  renameValue,
+  renameInputRef,
+  onSelect,
+  onStartRename,
+  onRenameChange,
+  onRenameSubmit,
+  onRenameCancel,
+  onDeleteRequest,
+}: SortableChapterItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: chapter.filename,
+    data: { type: 'chapter', filename: chapter.filename },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`group relative ${isDragging ? 'opacity-40' : ''}`}
+    >
+      {isRenaming ? (
+        <form
+          onSubmit={(e) => { e.preventDefault(); onRenameSubmit(); }}
+          className="px-3 py-1"
+        >
+          <input
+            ref={renameInputRef}
+            value={renameValue}
+            onChange={(e) => onRenameChange(e.target.value)}
+            onBlur={onRenameSubmit}
+            onKeyDown={(e) => { if (e.key === 'Escape') onRenameCancel(); }}
+            className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-sm text-zinc-100 focus:outline-none"
+          />
+        </form>
+      ) : (
+        <button
+          onClick={onSelect}
+          className={`w-full text-left px-3 py-1.5 text-sm truncate pr-20 ${
+            isActive
+              ? 'bg-zinc-700 text-zinc-100'
+              : 'text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100'
+          }`}
+        >
+          {chapter.title}
+        </button>
+      )}
+
+      {/* Word count (hidden on hover) */}
+      {!isRenaming && wordCount !== undefined && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex group-hover:hidden">
+          <span className="text-zinc-600 text-xs">{wordCount}</span>
+        </div>
+      )}
+
+      {/* Action icons (visible on hover) */}
+      {!isRenaming && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex gap-1">
+          <button
+            {...attributes}
+            {...listeners}
+            title="Drag to reorder"
+            className="text-zinc-500 hover:text-zinc-200 text-xs px-0.5 cursor-grab active:cursor-grabbing"
+          >
+            ⠿
+          </button>
+          <button
+            onClick={onStartRename}
+            title="Rename"
+            className="text-zinc-500 hover:text-zinc-200 text-xs px-0.5"
+          >
+            ✎
+          </button>
+          <button
+            onClick={onDeleteRequest}
+            title="Delete"
+            className="text-zinc-500 hover:text-red-400 text-xs px-0.5"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </li>
+  );
 }
 
 export default function ChapterList({ onChapterClick }: Props) {
@@ -25,6 +158,8 @@ export default function ChapterList({ onChapterClick }: Props) {
 
   const [renamingFilename, setRenamingFilename] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+
+  const [pendingDelete, setPendingDelete] = useState<Chapter | null>(null);
 
   const newInputRef = useRef<HTMLInputElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -75,14 +210,17 @@ export default function ChapterList({ onChapterClick }: Props) {
     }
   }
 
-  async function handleDelete(filename: string) {
-    if (!project) return;
+  async function confirmDelete() {
+    if (!project || !pendingDelete) return;
+    const filename = pendingDelete.filename;
     try {
       await deleteChapter(project.rootPath, filename);
       if (activeChapter?.filename === filename) setActiveChapter(null);
       await refreshChapters();
     } catch (err) {
       console.error(err);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -106,65 +244,30 @@ export default function ChapterList({ onChapterClick }: Props) {
       </div>
 
       {/* Chapter list */}
-      <ul className="flex flex-col">
-        {chapters.map((chapter) => (
-          <li key={chapter.filename} className="group relative">
-            {renamingFilename === chapter.filename ? (
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleRename(chapter.filename); }}
-                className="px-3 py-1"
-              >
-                <input
-                  ref={renameInputRef}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={() => handleRename(chapter.filename)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { setRenamingFilename(null); setRenameValue(''); } }}
-                  className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-sm text-zinc-100 focus:outline-none"
-                />
-              </form>
-            ) : (
-              <button
-                onClick={() => { setActiveChapter(chapter); onChapterClick?.(); }}
-                className={`w-full text-left px-3 py-1.5 text-sm truncate pr-16 ${
-                  activeChapter?.filename === chapter.filename
-                    ? 'bg-zinc-700 text-zinc-100'
-                    : 'text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100'
-                }`}
-              >
-                {chapter.title}
-              </button>
-            )}
-
-            {/* Word count (hidden on hover) */}
-            {renamingFilename !== chapter.filename && wordCounts[chapter.filename] !== undefined && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex group-hover:hidden">
-                <span className="text-zinc-600 text-xs">{wordCounts[chapter.filename]}</span>
-              </div>
-            )}
-
-            {/* Action icons (visible on hover) */}
-            {renamingFilename !== chapter.filename && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex gap-1">
-                <button
-                  onClick={() => { setRenamingFilename(chapter.filename); setRenameValue(chapter.title); }}
-                  title="Rename"
-                  className="text-zinc-500 hover:text-zinc-200 text-xs px-0.5"
-                >
-                  ✎
-                </button>
-                <button
-                  onClick={() => handleDelete(chapter.filename)}
-                  title="Delete"
-                  className="text-zinc-500 hover:text-red-400 text-xs px-0.5"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+      <SortableContext
+        items={chapters.map(c => c.filename)}
+        strategy={verticalListSortingStrategy}
+      >
+        <ul className="flex flex-col">
+          {chapters.map((chapter) => (
+            <SortableChapterItem
+              key={chapter.filename}
+              chapter={chapter}
+              isActive={activeChapter?.filename === chapter.filename}
+              isRenaming={renamingFilename === chapter.filename}
+              wordCount={wordCounts[chapter.filename]}
+              renameValue={renameValue}
+              renameInputRef={renameInputRef}
+              onSelect={() => { setActiveChapter(chapter); onChapterClick?.(); }}
+              onStartRename={() => { setRenamingFilename(chapter.filename); setRenameValue(chapter.title); }}
+              onRenameChange={setRenameValue}
+              onRenameSubmit={() => handleRename(chapter.filename)}
+              onRenameCancel={() => { setRenamingFilename(null); setRenameValue(''); }}
+              onDeleteRequest={() => setPendingDelete(chapter)}
+            />
+          ))}
+        </ul>
+      </SortableContext>
 
       {/* New chapter input */}
       {creatingNew && (
@@ -211,6 +314,32 @@ export default function ChapterList({ onChapterClick }: Props) {
           )}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete chapter?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete{' '}
+              <span className="font-semibold text-zinc-100">{pendingDelete?.title}</span>{' '}
+              and its stickies. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

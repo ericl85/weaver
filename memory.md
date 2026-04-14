@@ -83,6 +83,8 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Left navigation pane | Complete (T-010) | LeftPane with Content/Files toggle; ChapterList (chapters + codex), FileExplorer (dir tree), FileEditor (raw textarea, Ctrl+S) |
 | Sidebar panel system | Complete (T-013) | Sidebar.tsx + SidebarIcon.tsx; icon strip always visible, one panel at a time, collapses to strip when none active. Preview panel removed — Lexical is the rendered view. |
 | Outline panel | Complete (T-014) | OutlinePanel.tsx in panels/; AnchorNode.tsx in nodes/; EditorContext.tsx exposes LexicalEditor instance; EditorRefPlugin inside Editor.tsx sets it |
+| Chapter reordering | Complete (#23) | @dnd-kit/sortable SortableContext + SortableChapterItem in ChapterList; grip handle (⠿) on hover; onDragEnd in DndProvider does optimistic arrayMove + reorderChapters IPC; stickies unaffected. |
+| Chapter delete confirmation | Complete (#26) | AlertDialog (shadcn) in ChapterList gated by pendingDelete state; single dialog instance, Cancel/Escape/backdrop all safe, Delete button red destructive. |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Complete (T-011) | src/lib/markdown.ts; WEAVER_TRANSFORMERS extends TRANSFORMERS with AnchorTransformer; markdownToEditorState / editorStateToMarkdown exported |
 | Theming UI | Not started | Colors hardcoded in Tailwind classes |

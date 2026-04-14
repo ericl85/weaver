@@ -1,13 +1,17 @@
 import { ReactNode } from 'react';
 import {
   DndContext,
+  DragEndEvent,
   DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   useDndContext,
 } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useStickyContext } from '../contexts/StickyContext';
+import { useProject } from '../contexts/ProjectContext';
+import { reorderChapters } from '../lib/tauri';
 
 // Explicit lookup table — Tailwind needs full class names to include them in the build
 const OVERLAY_COLORS: Record<string, string> = {
@@ -38,11 +42,25 @@ function colorDot(color: string) {
 function DragOverlayContent() {
   const { active } = useDndContext();
   const { categories, stickies } = useStickyContext();
+  const { chapters } = useProject();
 
   if (!active) return null;
 
-  const data = active.data.current as { type?: string; stickyId?: string; anchorId?: string; categoryColor?: string } | undefined;
+  const data = active.data.current as { type?: string; stickyId?: string; anchorId?: string; categoryColor?: string; filename?: string } | undefined;
   if (!data) return null;
+
+  if (data.type === 'chapter' && data.filename) {
+    const chapter = chapters.find(c => c.filename === data.filename);
+    return (
+      <div
+        style={{ pointerEvents: 'none' }}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-600 bg-zinc-800 shadow-lg text-xs text-zinc-200 cursor-grabbing select-none"
+      >
+        <span className="w-2 h-2 rounded-full shrink-0 bg-zinc-400" />
+        {chapter?.title ?? 'Chapter'}
+      </div>
+    );
+  }
 
   let color = data.categoryColor ?? 'zinc';
   let label = 'Note';
@@ -76,14 +94,40 @@ function DragOverlayContent() {
 
 /** Configures @dnd-kit/core for the Weaver layout. Must wrap both the StickyPanel and the Editor. */
 export default function DndProvider({ children }: { children: ReactNode }) {
+  const { project, chapters, setChapters, refreshChapters } = useProject();
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     }),
   );
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const type = active.data.current?.type as string | undefined;
+    if (type !== 'chapter') return;
+
+    if (!project) return;
+
+    const oldIndex = chapters.findIndex(c => c.filename === active.id);
+    const newIndex = chapters.findIndex(c => c.filename === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(chapters, oldIndex, newIndex);
+    setChapters(reordered);
+
+    try {
+      await reorderChapters(project.rootPath, reordered.map(c => c.filename));
+    } catch (err) {
+      console.error('reorderChapters failed:', err);
+      await refreshChapters();
+    }
+  }
+
   return (
-    <DndContext sensors={sensors}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       {children}
       <DragOverlay dropAnimation={null} style={{ pointerEvents: 'none' }}>
         <DragOverlayContent />

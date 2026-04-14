@@ -8,6 +8,7 @@ interface ProjectContextValue {
   activeChapter: Chapter | null;
   setProject: (project: Project | null) => void;
   setActiveChapter: (chapter: Chapter | null) => void;
+  setChapters: (chapters: Chapter[]) => void;
   refreshChapters: () => Promise<void>;
 }
 
@@ -35,7 +36,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   return (
     <ProjectContext.Provider
-      value={{ project, chapters, activeChapter, setProject, setActiveChapter, refreshChapters }}
+      value={{ project, chapters, activeChapter, setProject, setActiveChapter, setChapters, refreshChapters }}
     >
       {children}
     </ProjectContext.Provider>
