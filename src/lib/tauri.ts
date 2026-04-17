@@ -168,3 +168,13 @@ export function updateCategory(
 export function deleteCategory(projectPath: string, categoryId: string): Promise<void> {
   return invoke('delete_category', { projectPath, categoryId });
 }
+
+// --- Project metadata ---
+
+export function updateProjectMetadata(
+  projectPath: string,
+  title: string,
+  author: string,
+): Promise<Project> {
+  return invoke('update_project_metadata', { projectPath, title, author });
+}

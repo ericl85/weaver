@@ -12,6 +12,7 @@ interface TitleBarProps {
   onToggleRight: () => void;
   onNewProject: () => void;
   onOpenProject: () => void;
+  onOpenSettings: () => void;
 }
 
 type MenuId = 'file' | 'edit' | 'view' | 'help';
@@ -37,6 +38,7 @@ export default function TitleBar({
   onToggleRight,
   onNewProject,
   onOpenProject,
+  onOpenSettings,
 }: TitleBarProps) {
   const { project, setProject } = useProject();
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
@@ -78,6 +80,8 @@ export default function TitleBar({
       { label: 'Open Project', action: onOpenProject },
       { label: 'Save', shortcut: 'Ctrl+S', action: triggerSave, disabled: !project },
       { label: 'Close Project', action: () => setProject(null), disabled: !project },
+      { separator: true },
+      { label: 'Project Settings\u2026', shortcut: 'Ctrl+,', action: onOpenSettings, disabled: !project },
       { separator: true },
       { label: 'Exit', action: () => appWindow.close() },
     ],
@@ -171,6 +175,19 @@ export default function TitleBar({
 
       {/* Drag region spacer */}
       <div className="flex-1" data-tauri-drag-region />
+
+      {/* Gear icon — project settings */}
+      <button
+        title="Project Settings (Ctrl+,)"
+        disabled={!project}
+        onClick={onOpenSettings}
+        className="w-8 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
 
       {/* Window controls — hidden on macOS (native traffic lights used instead) */}
       {!isMac && <div className="flex items-stretch">

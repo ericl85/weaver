@@ -10,6 +10,7 @@ interface ProjectContextValue {
   setActiveChapter: (chapter: Chapter | null) => void;
   setChapters: (chapters: Chapter[]) => void;
   refreshChapters: () => Promise<void>;
+  updateProjectState: (partial: Partial<Project>) => void;
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
@@ -34,9 +35,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     setChapters(updated);
   }, [project]);
 
+  const updateProjectState = useCallback((partial: Partial<Project>) => {
+    setProjectState(prev => prev ? { ...prev, ...partial } : prev);
+  }, []);
+
   return (
     <ProjectContext.Provider
-      value={{ project, chapters, activeChapter, setProject, setActiveChapter, setChapters, refreshChapters }}
+      value={{ project, chapters, activeChapter, setProject, setActiveChapter, setChapters, refreshChapters, updateProjectState }}
     >
       {children}
     </ProjectContext.Provider>

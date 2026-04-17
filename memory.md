@@ -85,6 +85,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Outline panel | Complete (T-014) | OutlinePanel.tsx in panels/; AnchorNode.tsx in nodes/; EditorContext.tsx exposes LexicalEditor instance; EditorRefPlugin inside Editor.tsx sets it |
 | Chapter reordering | Complete (#23) | @dnd-kit/sortable SortableContext + SortableChapterItem in ChapterList; grip handle (⠿) on hover; onDragEnd in DndProvider does optimistic arrayMove + reorderChapters IPC; stickies unaffected. |
 | Chapter delete confirmation | Complete (#26) | AlertDialog (shadcn) in ChapterList gated by pendingDelete state; single dialog instance, Cancel/Escape/backdrop all safe, Delete button red destructive. |
+| Project Settings Dialog | Complete (#27) | SettingsDialog.tsx shell (Dialog primitive, left-nav + content layout). General section: title/author → update_project_metadata Rust command → updateProjectState. Categories section: list/add/rename/recolor/delete with AlertDialog on delete; COLOR_MAP extracted to src/lib/categoryColors.ts. Entry points: gear icon in TitleBar, File menu item, Ctrl+,/Cmd+,, macOS native menu. Theme/Codex/AI nav rows are disabled placeholders. |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Complete (T-011) | src/lib/markdown.ts; WEAVER_TRANSFORMERS extends TRANSFORMERS with AnchorTransformer; markdownToEditorState / editorStateToMarkdown exported |
 | Theming UI | Not started | Colors hardcoded in Tailwind classes |

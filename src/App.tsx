@@ -13,12 +13,14 @@ import LeftPane from './components/LeftPane';
 import FileEditor from './components/FileEditor';
 import Sidebar from './components/Sidebar';
 import TitleBar from './components/TitleBar';
+import SettingsDialog from './components/SettingsDialog';
 
 function AppShell() {
   const { project, activeChapter, setProject } = useProject();
   const [rawFile, setRawFile] = useState<string | null>(null);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // When an active chapter is selected, close any open raw file
   useEffect(() => {
@@ -47,10 +49,23 @@ function AppShell() {
           document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, bubbles: true }));
           break;
         case 'close-project': setProject(null); break;
+        case 'open-settings': if (project) setSettingsOpen(true); break;
       }
     }).then(fn => { unlisten = fn; });
     return () => { unlisten?.(); };
-  }, []);
+  }, [project]);
+
+  // Ctrl+, / Cmd+, opens settings
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === ',' && (e.ctrlKey || e.metaKey) && project) {
+        e.preventDefault();
+        setSettingsOpen(true);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [project]);
 
   const titleBar = (
     <TitleBar
@@ -60,6 +75,7 @@ function AppShell() {
       onToggleRight={() => setRightCollapsed(c => !c)}
       onNewProject={handleNewProject}
       onOpenProject={handleOpenProject}
+      onOpenSettings={() => setSettingsOpen(true)}
     />
   );
 
@@ -113,6 +129,8 @@ function AppShell() {
         {/* Right sidebar */}
         {!rightCollapsed && <Sidebar />}
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }

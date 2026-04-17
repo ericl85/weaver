@@ -374,6 +374,21 @@ fn delete_sticky(
     fs::rename(&tmp, &path).map_err(|e| e.to_string())
 }
 
+// --- Project metadata commands ---
+
+#[tauri::command]
+fn update_project_metadata(
+    project_path: String,
+    title: String,
+    author: String,
+) -> Result<Project, String> {
+    let mut project = read_project_json(&project_path)?;
+    project.title = title;
+    project.author = author;
+    write_project_json(&project_path, &project)?;
+    Ok(project)
+}
+
 // --- Category management commands ---
 
 #[tauri::command]
@@ -599,11 +614,13 @@ pub fn run() {
                 let open_project = MenuItem::with_id(app, "open-project", "Open Project", true, None::<&str>)?;
                 let save = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
                 let close_project = MenuItem::with_id(app, "close-project", "Close Project", true, None::<&str>)?;
+                let project_settings = MenuItem::with_id(app, "open-settings", "Project Settings\u{2026}", true, Some("Cmd+,"))?;
                 let sep1 = PredefinedMenuItem::separator(app)?;
                 let sep2 = PredefinedMenuItem::separator(app)?;
+                let sep3 = PredefinedMenuItem::separator(app)?;
                 let quit = PredefinedMenuItem::quit(app, Some("Quit Weaver"))?;
                 let file_menu = SubmenuBuilder::new(app, "File")
-                    .items(&[&new_project, &open_project, &sep1, &save, &close_project, &sep2, &quit])
+                    .items(&[&new_project, &open_project, &sep1, &save, &close_project, &sep2, &project_settings, &sep3, &quit])
                     .build()?;
 
                 // Edit submenu — all predefined so the OS wires up Cmd+Z/X/C/V etc.
@@ -679,6 +696,7 @@ pub fn run() {
             add_category,
             update_category,
             delete_category,
+            update_project_metadata,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
