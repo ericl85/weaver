@@ -28,6 +28,7 @@ export default function ChapterEditorLayer({
         initialContent={initialContent}
         onContentChange={onContentChange}
         filename={_chapter.filename}
+        visible={visible}
       />
     </div>
   );

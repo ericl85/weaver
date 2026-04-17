@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { useStickyContext } from '../../contexts/StickyContext';
 import { useProject } from '../../contexts/ProjectContext';
@@ -144,21 +144,33 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
     ? 'mb-2 p-3 gap-0 ring-0 rounded-lg bg-zinc-800 border border-dashed border-zinc-600'
     : `mb-2 p-3 gap-0 ring-0 rounded-lg bg-zinc-800 border-l-4 ${colors.border}`;
 
+  function handleCategoryClick() {
+    if (isUnattached || !sticky.anchorId) return;
+    const el = document.querySelector<HTMLElement>(`[data-anchor-id="${sticky.anchorId}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   return (
     <Card
-      className={`group relative transition-opacity ${cardClass} ${highlighted ? 'outline outline-1 outline-zinc-400' : ''}`}
+      className={`group relative ${cardClass} ${highlighted ? 'outline outline-1 outline-zinc-400' : ''}`}
       style={{ opacity: isDragging ? 0.4 : opacity }}
+      data-sticky-id={sticky.id}
     >
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
-        <div className={`flex items-center gap-1 text-xs ${colors.text}`}>
-          {/* Drag handle */}
+        <div
+          className={`flex items-center gap-1 text-xs ${colors.text} ${!isUnattached ? 'cursor-pointer hover:opacity-80' : ''}`}
+          onClick={handleCategoryClick}
+          title={!isUnattached ? 'Jump to anchor in manuscript' : undefined}
+        >
+          {/* Drag handle — stopPropagation so it doesn't trigger nav click */}
           <span
             ref={setDragRef}
             {...listeners}
             {...attributes}
             className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 mr-0.5 select-none"
             title="Drag to anchor in manuscript"
+            onClick={e => e.stopPropagation()}
           >
             ⠿
           </span>
@@ -226,6 +238,36 @@ export default function StickyPanel() {
   } = useStickyContext();
   const { project, activeChapter } = useProject();
 
+  // When an editor badge is clicked, scroll the panel to the highlighted card.
+  useEffect(() => {
+    if (!highlightedStickyId) return;
+    const el = document.querySelector<HTMLElement>(`[data-sticky-id="${highlightedStickyId}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [highlightedStickyId]);
+
+  // As the editor scrolls, keep the most prominent (highest-opacity) anchored
+  // sticky card visible in the panel.
+  const prevMaxStickyIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    let maxOpacity = -1;
+    let maxAnchorId: string | null = null;
+    anchorOpacities.forEach((opacity, anchorId) => {
+      if (opacity > maxOpacity) {
+        maxOpacity = opacity;
+        maxAnchorId = anchorId;
+      }
+    });
+    if (!maxAnchorId) return;
+
+    const sticky = stickies.find(s => s.anchorId === maxAnchorId);
+    if (!sticky) return;
+    if (prevMaxStickyIdRef.current === sticky.id) return;
+    prevMaxStickyIdRef.current = sticky.id;
+
+    const el = document.querySelector<HTMLElement>(`[data-sticky-id="${sticky.id}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [anchorOpacities, stickies]);
+
   const persist = useCallback(
     (updated: Sticky[]) => {
       if (!project || !activeChapter) return;
@@ -284,9 +326,21 @@ export default function StickyPanel() {
       .map(cat => cat.id),
   );
 
-  const anchored = stickies.filter(
-    s => s.anchorId !== null && visibleCategoryIds.has(s.categoryId),
-  );
+  // Sort anchored stickies by their position in the manuscript.
+  // querySelectorAll returns elements in DOM (document) order, which matches
+  // top-to-bottom anchor position in the visible editor layer.
+  const anchorIdOrder = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-anchor-id]'),
+  ).map(el => el.dataset.anchorId!);
+  const anchorPositionMap = new Map(anchorIdOrder.map((id, i) => [id, i]));
+
+  const anchored = stickies
+    .filter(s => s.anchorId !== null && visibleCategoryIds.has(s.categoryId))
+    .sort((a, b) => {
+      const ai = anchorPositionMap.get(a.anchorId!) ?? Infinity;
+      const bi = anchorPositionMap.get(b.anchorId!) ?? Infinity;
+      return ai - bi;
+    });
   const unattached = stickies.filter(
     s => s.anchorId === null && visibleCategoryIds.has(s.categoryId),
   );

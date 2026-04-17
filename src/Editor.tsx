@@ -19,6 +19,7 @@ import type { EditorState } from "lexical";
 import { StickyAnchorNode } from "./nodes/StickyAnchorNode";
 import { useEditor } from "./contexts/EditorContext";
 import StickyDndBridgePlugin from "./plugins/StickyDndBridgePlugin";
+import ScrollSyncPlugin from "./plugins/ScrollSyncPlugin";
 import {
   markdownToEditorState,
   editorStateToMarkdown,
@@ -143,12 +144,15 @@ export interface EditorProps {
   onContentChange: (markdown: string) => void;
   /** Filename of the chapter this instance is bound to; used for the dnd-kit droppable ID. */
   filename?: string;
+  /** Whether this editor layer is currently visible. Passed to ScrollSyncPlugin to prevent hidden layers from writing to anchorOpacities. */
+  visible?: boolean;
 }
 
 export default function Editor({
   initialContent,
   onContentChange,
   filename,
+  visible = true,
 }: EditorProps) {
   const initialConfig = {
     namespace: "WeaverEditor",
@@ -209,6 +213,7 @@ export default function Editor({
         />
         <EditorRefPlugin />
         <StickyDndBridgePlugin dropzoneId={dropzoneId} />
+        <ScrollSyncPlugin visible={visible} dropzoneId={dropzoneId} />
       </div>
     </LexicalComposer>
   );

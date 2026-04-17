@@ -3,6 +3,7 @@ use std::fs;
 use std::path::Path;
 use uuid::Uuid;
 use tauri::Emitter;
+use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
