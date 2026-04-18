@@ -37,6 +37,8 @@ interface StickyContextValue {
 
   badgesVisible: boolean;
   setBadgesVisible: (visible: boolean) => void;
+
+  reloadStickies: (filename: string) => void;
 }
 
 const StickyContext = createContext<StickyContextValue | null>(null);
@@ -105,6 +107,13 @@ export function StickyProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const reloadStickies = useCallback((filename: string) => {
+    if (!project || activeChapter?.filename !== filename) return;
+    readStickies(project.rootPath, filename)
+      .then(setStickies)
+      .catch(console.error);
+  }, [project, activeChapter]);
+
   const highlightSticky = useCallback((stickyId: string) => {
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
@@ -131,6 +140,7 @@ export function StickyProvider({ children }: { children: ReactNode }) {
         setAnchorOpacities,
         badgesVisible,
         setBadgesVisible,
+        reloadStickies,
       }}
     >
       {children}

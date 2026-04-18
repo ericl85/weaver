@@ -4,6 +4,8 @@ import { readChapter, saveChapter } from '../lib/tauri';
 import ChapterEditorLayer from './ChapterEditorLayer';
 import type { Chapter } from '../types';
 import { useWordCount, countWords } from '../contexts/WordCountContext';
+import { useStickyContext } from '../contexts/StickyContext';
+import { reconcileOrphans } from '../lib/stickyOrphans';
 
 interface OpenChapter {
   chapter: Chapter;
@@ -26,6 +28,7 @@ const DEBOUNCE_MS = 1000;
 export default function ChapterStackManager() {
   const { project, activeChapter } = useProject();
   const { wordCounts, setWordCount } = useWordCount();
+  const { reloadStickies } = useStickyContext();
 
   const [openChapters, setOpenChapters] = useState<OpenChapter[]>([]);
   const [activeFilename, setActiveFilename] = useState<string | null>(null);
@@ -49,10 +52,12 @@ export default function ChapterStackManager() {
         next.delete(filename);
         return next;
       });
+      const changed = await reconcileOrphans(project.rootPath, filename, content);
+      if (changed) reloadStickies(filename);
     } catch (err) {
       console.error(`Failed to save chapter ${filename}:`, err);
     }
-  }, [project]);
+  }, [project, reloadStickies]);
 
   const scheduleFlush = useCallback((filename: string) => {
     const existing = saveTimers.current.get(filename);
@@ -90,6 +95,7 @@ export default function ChapterStackManager() {
     loadingFilenames.current.add(filename);
     try {
       const content = await readChapter(project.rootPath, filename);
+      await reconcileOrphans(project.rootPath, filename, content);
       latestContent.current.set(filename, content);
       setWordCount(filename, countWords(content));
       setOpenChapters(prev => {
