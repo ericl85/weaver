@@ -261,6 +261,8 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
   const dragColor = useRef<string>('zinc');
   // Last caret range successfully resolved during drag (before the overlay settles at drop position)
   const lastValidCaretRange = useRef<Range | null>(null);
+  // pointermove listener ref so we can remove it on drag end/cancel
+  const pointerMoveListener = useRef<((e: PointerEvent) => void) | null>(null);
 
   function colorForDragData(data: DragData): string {
     if (data.type === 'sticky') {
@@ -307,36 +309,42 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
       if (isDragData(data)) {
         dragColor.current = colorForDragData(data);
       }
+
+      // Seed pointer from the activator event (correct at activation time)
+      const activator = event.activatorEvent;
+      if (activator instanceof PointerEvent || activator instanceof MouseEvent) {
+        latestPointer.current = { x: activator.clientX, y: activator.clientY };
+      }
+
+      // Register a capture-phase pointermove listener as the sole source of
+      // pointer coordinates. event.delta absorbs scroll compensation and drifts
+      // from the true viewport position whenever a scrollable ancestor scrolls.
+      const handlePointerMove = (e: PointerEvent) => {
+        latestPointer.current = { x: e.clientX, y: e.clientY };
+        if (rafScheduled.current) return;
+        rafScheduled.current = true;
+        requestAnimationFrame(() => {
+          rafScheduled.current = false;
+          const ptr = latestPointer.current;
+          if (!ptr) return;
+          if (latestOverId.current !== dropzoneId) {
+            setDropCursor(null);
+            return;
+          }
+          updateDropCursorAt(ptr.x, ptr.y, dragColor.current);
+        });
+      };
+      pointerMoveListener.current = handlePointerMove;
+      window.addEventListener('pointermove', handlePointerMove, { passive: true, capture: true });
     },
 
     onDragMove(event) {
-      const activatorEvent = event.activatorEvent as PointerEvent;
-      const x = activatorEvent.clientX + event.delta.x;
-      const y = activatorEvent.clientY + event.delta.y;
-      latestPointer.current = { x, y };
       latestOverId.current = event.over?.id?.toString() ?? null;
 
       const data = event.active.data.current;
       if (isDragData(data)) {
         dragColor.current = colorForDragData(data);
       }
-
-      if (rafScheduled.current) return;
-      rafScheduled.current = true;
-
-      requestAnimationFrame(() => {
-        rafScheduled.current = false;
-        const ptr = latestPointer.current;
-        if (!ptr) return;
-
-        // Use the ref — not the captured event — so we always check the latest over value
-        if (latestOverId.current !== dropzoneId) {
-          setDropCursor(null);
-          return;
-        }
-
-        updateDropCursorAt(ptr.x, ptr.y, dragColor.current);
-      });
     },
 
     onDragEnd(event) {
@@ -346,6 +354,10 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
       // cursor and would intercept a fresh hit-test.
       const caretRange = lastValidCaretRange.current;
 
+      if (pointerMoveListener.current) {
+        window.removeEventListener('pointermove', pointerMoveListener.current, { capture: true });
+        pointerMoveListener.current = null;
+      }
       rafScheduled.current = false;
       latestPointer.current = null;
       lastValidCaretRange.current = null;
@@ -400,6 +412,10 @@ export default function StickyDndBridgePlugin({ dropzoneId }: StickyDndBridgePlu
     },
 
     onDragCancel() {
+      if (pointerMoveListener.current) {
+        window.removeEventListener('pointermove', pointerMoveListener.current, { capture: true });
+        pointerMoveListener.current = null;
+      }
       rafScheduled.current = false;
       latestPointer.current = null;
       lastValidCaretRange.current = null;
