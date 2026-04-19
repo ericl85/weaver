@@ -3,7 +3,6 @@ use std::fs;
 use std::path::Path;
 use uuid::Uuid;
 use tauri::Emitter;
-use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -659,6 +658,7 @@ pub fn run() {
             // On Windows/Linux that would restore the native titlebar — disable it here.
             #[cfg(not(target_os = "macos"))]
             {
+                use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
                     window.set_decorations(false)?;
                 }
