@@ -13,6 +13,12 @@ export interface Sticky {
   createdAt: string;
 }
 
+export interface Goals {
+  projectWordCount?: number;
+  dailyWordCount?: number;
+  deadline?: string; // reserved; no behavior yet
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -21,6 +27,24 @@ export interface Project {
   rootPath: string;
   chapters: string[];
   stickyCategories: StickyCategory[];
+  goals?: Goals;
+}
+
+export interface CurrentDay {
+  date: string;           // "YYYY-MM-DD" local
+  startingWordCount: number;
+  celebrated: boolean;
+}
+
+export interface DayEntry {
+  wordsWritten: number;
+  totalAtEndOfDay: number;
+}
+
+export interface Stats {
+  version: number;
+  currentDay?: CurrentDay;
+  dailyHistory: Record<string, DayEntry>; // key = "YYYY-MM-DD"
 }
 
 export interface Chapter {

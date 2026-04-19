@@ -5,12 +5,14 @@ mod codex;
 mod menu;
 mod project;
 mod raw_files;
+mod stats;
 mod stickies;
 mod util;
 
 use chapters::{create_chapter, delete_chapter, list_chapters, read_chapter, rename_chapter, reorder_chapters, save_chapter};
 use codex::{create_codex_entry, delete_codex_entry, list_codex, read_codex_entry, save_codex_entry};
-use project::{create_project, open_project, update_project_metadata};
+use project::{create_project, open_project, update_goals, update_project_metadata};
+use stats::{count_project_words, mark_celebrated, read_stats, update_daily_progress};
 use raw_files::{list_project_files, read_raw_file, save_raw_file};
 use stickies::{add_category, delete_category, delete_sticky, list_categories, read_stickies, save_stickies, update_category};
 
@@ -38,6 +40,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             add_category,
+            count_project_words,
             create_chapter,
             create_codex_entry,
             create_project,
@@ -49,10 +52,12 @@ pub fn run() {
             list_chapters,
             list_codex,
             list_project_files,
+            mark_celebrated,
             open_project,
             read_chapter,
             read_codex_entry,
             read_raw_file,
+            read_stats,
             read_stickies,
             rename_chapter,
             reorder_chapters,
@@ -61,6 +66,8 @@ pub fn run() {
             save_raw_file,
             save_stickies,
             update_category,
+            update_daily_progress,
+            update_goals,
             update_project_metadata,
         ])
         .run(tauri::generate_context!())
