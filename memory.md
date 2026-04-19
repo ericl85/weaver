@@ -42,6 +42,9 @@ Lexical was chosen because it is compositional (features are plugins), React-nat
 ### Styling: Tailwind utilities only, dark theme only
 No CSS-in-JS, no separate stylesheet per component. All color tokens use the `zinc` scale. The design intentionally avoids a light mode to reduce scope.
 
+### Rust code split into per-domain modules (2026-04-19)
+`lib.rs` contains only `run()` and command registration; each domain owns its structs and helpers: `util.rs` (slug helpers + `atomic_write`), `project.rs`, `stickies.rs`, `chapters.rs`, `codex.rs`, `raw_files.rs`, `menu.rs`. All `.tmp` writes unified to `.{name}.tmp` hidden-file form via `atomic_write`.
+
 ### File I/O: All through Tauri commands
 The frontend has no direct filesystem access. Every read/write goes through a Tauri `invoke` call to a Rust command. This keeps the Rust layer as the security/permission boundary.
 
