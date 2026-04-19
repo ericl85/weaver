@@ -4,6 +4,8 @@ A minimalist desktop app for writing novels. Dark theme, no frills, stays out of
 
 Built with [Tauri 2](https://tauri.app), React, and [Lexical](https://lexical.dev). Stores your work as plain Markdown files in an opinionated directory layout that plays nicely with Git and [pandoc](https://pandoc.org).
 
+> **Fair warning:** This is vibe-coded. I'm a software engineer in my professional life, so I am controlling this more as a project manager who knows how software is supposed to be constructed but I do not have the time to write code this fast. It was made for my own use and I've been using it exclusively while writing my own novel. It's very pleasant to use and if you're desiring an editor that just gets out of your way, you probably will like it too. But it's pre-1.0, there are no automated tests (yet), and the AI wrote some truly cursed code at multiple points that led to overwriting content. I've tried very hard to enforce a design that does not allow that to happen, but I strongly suggest you always back up your work. The project structure is intended for you to do so with git, but any backup would be better than none.
+
 ---
 
 ## Features
