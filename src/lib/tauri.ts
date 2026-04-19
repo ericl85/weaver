@@ -6,6 +6,7 @@ import type {
   FileEntry,
   Sticky,
   StickyCategory,
+  Stats,
 } from '../types';
 
 // --- Project ---
@@ -177,4 +178,33 @@ export function updateProjectMetadata(
   author: string,
 ): Promise<Project> {
   return invoke('update_project_metadata', { projectPath, title, author });
+}
+
+// --- Stats ---
+
+export function countProjectWords(projectPath: string): Promise<number> {
+  return invoke('count_project_words', { projectPath });
+}
+
+// --- Stats ---
+
+export function readStats(projectPath: string): Promise<Stats> {
+  return invoke('read_stats', { projectPath });
+}
+
+export function updateDailyProgress(projectPath: string, currentWordCount: number): Promise<Stats> {
+  return invoke('update_daily_progress', { projectPath, currentWordCount });
+}
+
+export function markCelebrated(projectPath: string): Promise<Stats> {
+  return invoke('mark_celebrated', { projectPath });
+}
+
+// --- Goals ---
+
+export function updateGoals(
+  projectPath: string,
+  goals: { projectWordCount?: number; dailyWordCount?: number },
+): Promise<Project> {
+  return invoke('update_goals', { projectPath, goals });
 }

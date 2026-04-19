@@ -26,9 +26,11 @@ pub fn install_macos_menu(app: &tauri::App) -> Result<(), tauri::Error> {
         .items(&[&undo, &redo, &edit_sep, &cut, &copy, &paste, &select_all])
         .build()?;
 
+    let show_progress = MenuItem::with_id(app, "show-progress", "Show Progress Card", true, None::<&str>)?;
+    let view_sep = PredefinedMenuItem::separator(app)?;
     let fullscreen = PredefinedMenuItem::fullscreen(app, None)?;
     let view_menu = SubmenuBuilder::new(app, "View")
-        .items(&[&fullscreen])
+        .items(&[&show_progress, &view_sep, &fullscreen])
         .build()?;
 
     let minimize = PredefinedMenuItem::minimize(app, None)?;

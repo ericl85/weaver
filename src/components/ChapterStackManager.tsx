@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useProject } from '../contexts/ProjectContext';
-import { readChapter, saveChapter } from '../lib/tauri';
+import { readChapter, saveChapter, countProjectWords, updateDailyProgress } from '../lib/tauri';
 import ChapterEditorLayer from './ChapterEditorLayer';
 import type { Chapter } from '../types';
 import { useWordCount, countWords } from '../contexts/WordCountContext';
 import { useStickyContext } from '../contexts/StickyContext';
 import { reconcileOrphans } from '../lib/stickyOrphans';
+import { useStats } from '../contexts/StatsContext';
 
 interface OpenChapter {
   chapter: Chapter;
@@ -27,8 +28,9 @@ const DEBOUNCE_MS = 1000;
  */
 export default function ChapterStackManager() {
   const { project, activeChapter } = useProject();
-  const { wordCounts, setWordCount } = useWordCount();
+  const { wordCounts, setWordCount, projectTotal, setProjectTotal } = useWordCount();
   const { reloadStickies } = useStickyContext();
+  const { stats, setStats, markCelebrated } = useStats();
 
   const [openChapters, setOpenChapters] = useState<OpenChapter[]>([]);
   const [activeFilename, setActiveFilename] = useState<string | null>(null);
@@ -52,12 +54,26 @@ export default function ChapterStackManager() {
         next.delete(filename);
         return next;
       });
+      const total = await countProjectWords(project.rootPath);
+      setProjectTotal(total);
+      const prevDailyDelta = stats?.currentDay && projectTotal !== null
+        ? projectTotal - stats.currentDay.startingWordCount
+        : -1;
+      const nextStats = await updateDailyProgress(project.rootPath, total);
+      setStats(nextStats);
+      const dailyGoal = project.goals?.dailyWordCount;
+      if (dailyGoal && nextStats.currentDay) {
+        const nextDelta = total - nextStats.currentDay.startingWordCount;
+        if (prevDailyDelta < dailyGoal && nextDelta >= dailyGoal && !nextStats.currentDay.celebrated) {
+          markCelebrated();
+        }
+      }
       const changed = await reconcileOrphans(project.rootPath, filename, content);
       if (changed) reloadStickies(filename);
     } catch (err) {
       console.error(`Failed to save chapter ${filename}:`, err);
     }
-  }, [project, reloadStickies]);
+  }, [project, reloadStickies, projectTotal, setProjectTotal, stats, setStats, markCelebrated]);
 
   const scheduleFlush = useCallback((filename: string) => {
     const existing = saveTimers.current.get(filename);

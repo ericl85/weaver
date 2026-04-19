@@ -1,6 +1,6 @@
 # Weaver — Project State Memory
 
-_Last updated: 2026-04-06. Update this file whenever a phase completes or an architectural decision is made._
+_Last updated: 2026-04-19. Update this file whenever a phase completes or an architectural decision is made._
 
 ---
 
@@ -89,6 +89,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Chapter reordering | Complete (#23) | @dnd-kit/sortable SortableContext + SortableChapterItem in ChapterList; grip handle (⠿) on hover; onDragEnd in DndProvider does optimistic arrayMove + reorderChapters IPC; stickies unaffected. |
 | Chapter delete confirmation | Complete (#26) | AlertDialog (shadcn) in ChapterList gated by pendingDelete state; single dialog instance, Cancel/Escape/backdrop all safe, Delete button red destructive. |
 | Project Settings Dialog | Complete (#27) | SettingsDialog.tsx shell (Dialog primitive, left-nav + content layout). General section: title/author → update_project_metadata Rust command → updateProjectState. Categories section: list/add/rename/recolor/delete with AlertDialog on delete; COLOR_MAP extracted to src/lib/categoryColors.ts. Entry points: gear icon in TitleBar, File menu item, Ctrl+,/Cmd+,, macOS native menu. Theme/Codex/AI nav rows are disabled placeholders. |
+| Daily progress card | Complete (#32) | StatsContext seeds via update_daily_progress once per project open (waits for projectTotal); DailyGoalCard pinned bottom-right of center pane, hidden when no chapter active or no daily goal; amber/blue/emerald progress bars (shadcn Progress); canvas-confetti + CSS pulse on first goal crossing; dismissable via ×; View > Show Progress Card re-shows it (both custom and macOS native menu). |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Complete (T-011) | src/lib/markdown.ts; WEAVER_TRANSFORMERS extends TRANSFORMERS with AnchorTransformer; markdownToEditorState / editorStateToMarkdown exported |
 | Theming UI | Not started | Colors hardcoded in Tailwind classes |

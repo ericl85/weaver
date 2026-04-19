@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useProject } from '../contexts/ProjectContext';
+import { useWordCount } from '../contexts/WordCountContext';
 import { usePlatform } from '../hooks/usePlatform';
 
 const appWindow = getCurrentWindow();
@@ -13,6 +14,7 @@ interface TitleBarProps {
   onNewProject: () => void;
   onOpenProject: () => void;
   onOpenSettings: () => void;
+  onShowProgress: () => void;
 }
 
 type MenuId = 'file' | 'edit' | 'view' | 'help';
@@ -39,8 +41,10 @@ export default function TitleBar({
   onNewProject,
   onOpenProject,
   onOpenSettings,
+  onShowProgress,
 }: TitleBarProps) {
   const { project, setProject } = useProject();
+  const { projectTotal } = useWordCount();
   const [openMenu, setOpenMenu] = useState<MenuId | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const isMac = usePlatform() === 'macos';
@@ -97,6 +101,8 @@ export default function TitleBar({
     view: [
       { label: leftCollapsed ? 'Show Left Pane' : 'Hide Left Pane', action: onToggleLeft },
       { label: rightCollapsed ? 'Show Right Sidebar' : 'Hide Right Sidebar', action: onToggleRight },
+      { separator: true },
+      { label: 'Show Progress Card', action: onShowProgress, disabled: !project },
       { separator: true },
       { label: 'Fullscreen', shortcut: 'F11', action: () => appWindow.setFullscreen(true) },
     ],
@@ -174,7 +180,13 @@ export default function TitleBar({
       </div>}
 
       {/* Drag region spacer */}
-      <div className="flex-1" data-tauri-drag-region />
+      <div className="flex-1 flex items-center justify-end" data-tauri-drag-region>
+        {projectTotal !== null && (
+          <span className="text-xs text-zinc-500 mr-3 tabular-nums" data-tauri-drag-region>
+            {projectTotal.toLocaleString()} words
+          </span>
+        )}
+      </div>
 
       {/* Gear icon — project settings */}
       <button

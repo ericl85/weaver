@@ -6,8 +6,9 @@ import {
 } from './ui/dialog';
 import GeneralSettings from './settings/GeneralSettings';
 import CategorySettings from './settings/CategorySettings';
+import GoalsSettings from './settings/GoalsSettings';
 
-type Section = 'general' | 'categories' | 'theme' | 'codex' | 'ai';
+type Section = 'general' | 'goals' | 'categories' | 'theme' | 'codex' | 'ai';
 
 interface NavItemProps {
   label: string;
@@ -63,6 +64,11 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               onClick={() => setSection('general')}
             />
             <NavItem
+              label="Goals"
+              active={section === 'goals'}
+              onClick={() => setSection('goals')}
+            />
+            <NavItem
               label="Categories"
               active={section === 'categories'}
               onClick={() => setSection('categories')}
@@ -94,6 +100,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
             {section === 'general' && <GeneralSettings />}
+            {section === 'goals' && <GoalsSettings />}
             {section === 'categories' && <CategorySettings />}
             {section === 'theme' && (
               <div className="flex flex-col gap-2">

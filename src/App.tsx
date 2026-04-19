@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { WordCountProvider } from './contexts/WordCountContext';
 import { StickyProvider } from './contexts/StickyContext';
+import { StatsProvider, useStats } from './contexts/StatsContext';
 import DndProvider from './components/DndProvider';
 import ChapterStackManager from './components/ChapterStackManager';
 import WelcomeScreen from './components/WelcomeScreen';
@@ -14,9 +15,11 @@ import FileEditor from './components/FileEditor';
 import Sidebar from './components/Sidebar';
 import TitleBar from './components/TitleBar';
 import SettingsDialog from './components/SettingsDialog';
+import DailyGoalCard from './components/DailyGoalCard';
 
 function AppShell() {
   const { project, activeChapter, setProject } = useProject();
+  const { setProgressDismissed } = useStats();
   const [rawFile, setRawFile] = useState<string | null>(null);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -50,6 +53,7 @@ function AppShell() {
           break;
         case 'close-project': setProject(null); break;
         case 'open-settings': if (project) setSettingsOpen(true); break;
+        case 'show-progress': setProgressDismissed(false); break;
       }
     }).then(fn => { unlisten = fn; });
     return () => { unlisten?.(); };
@@ -76,6 +80,7 @@ function AppShell() {
       onNewProject={handleNewProject}
       onOpenProject={handleOpenProject}
       onOpenSettings={() => setSettingsOpen(true)}
+      onShowProgress={() => setProgressDismissed(false)}
     />
   );
 
@@ -124,6 +129,7 @@ function AppShell() {
           ) : (
             <ChapterStackManager />
           )}
+          <DailyGoalCard />
         </div>
 
         {/* Right sidebar */}
@@ -139,17 +145,19 @@ export default function App() {
   return (
     <SettingsProvider>
       <ThemeProvider>
-        <ProjectProvider>
-          <EditorProvider>
-            <StickyProvider>
-              <DndProvider>
-                <WordCountProvider>
-                  <AppShell />
-                </WordCountProvider>
-              </DndProvider>
-            </StickyProvider>
-          </EditorProvider>
-        </ProjectProvider>
+        <WordCountProvider>
+          <ProjectProvider>
+            <StatsProvider>
+              <EditorProvider>
+                <StickyProvider>
+                  <DndProvider>
+                    <AppShell />
+                  </DndProvider>
+                </StickyProvider>
+              </EditorProvider>
+            </StatsProvider>
+          </ProjectProvider>
+        </WordCountProvider>
       </ThemeProvider>
     </SettingsProvider>
   );
