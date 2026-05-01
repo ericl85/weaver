@@ -15,6 +15,8 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode, CodeHighlightNode } from "@lexical/code";
 import { LinkNode, AutoLinkNode } from "@lexical/link";
+import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
+import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
 import type { EditorState } from "lexical";
 import { StickyAnchorNode } from "./nodes/StickyAnchorNode";
 import { useEditor } from "./contexts/EditorContext";
@@ -77,6 +79,7 @@ const theme = {
     url: "text-blue-400",
     variable: "text-orange-400",
   },
+  hr: "my-6 border-t border-zinc-700",
   link: "text-blue-400 underline cursor-pointer hover:text-blue-300",
   text: {
     bold: "font-bold",
@@ -168,6 +171,7 @@ export default function Editor({
       CodeHighlightNode,
       LinkNode,
       AutoLinkNode,
+      HorizontalRuleNode,
     ],
   };
 
@@ -206,6 +210,7 @@ export default function Editor({
         <AutoFocusPlugin />
         <ListPlugin />
         <LinkPlugin />
+        <HorizontalRulePlugin />
         <MarkdownShortcutPlugin transformers={WEAVER_TRANSFORMERS} />
         <InitialContentPlugin
           initialContent={initialContent}

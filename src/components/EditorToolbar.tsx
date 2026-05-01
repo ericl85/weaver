@@ -22,6 +22,7 @@ import {
 } from '@lexical/list';
 import { $isCodeNode, $createCodeNode } from '@lexical/code';
 import { $setBlocksType } from '@lexical/selection';
+import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
 
 type BlockType = 'paragraph' | 'h1' | 'h2' | 'h3' | 'quote' | 'ul' | 'ol' | 'code';
 
@@ -237,6 +238,18 @@ export default function EditorToolbar() {
         aria-label="Code block"
       >
         <span className="font-mono text-[11px]">{'{}'}</span>
+      </button>
+
+      <Sep />
+
+      {/* Horizontal rule */}
+      <button
+        className={btnClass(false)}
+        onClick={() => editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)}
+        title="Horizontal rule (scene break)"
+        aria-label="Insert horizontal rule"
+      >
+        ―
       </button>
 
       <Sep />
