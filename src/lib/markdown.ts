@@ -2,14 +2,33 @@ import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
   TRANSFORMERS,
+  type ElementTransformer,
   type TextMatchTransformer,
 } from '@lexical/markdown';
 import type { EditorState, LexicalEditor } from 'lexical';
+import {
+  HorizontalRuleNode,
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+} from '@lexical/react/LexicalHorizontalRuleNode';
 import {
   StickyAnchorNode,
   $createStickyAnchorNode,
   $isStickyAnchorNode,
 } from '../nodes/StickyAnchorNode';
+
+const HR_TRANSFORMER: ElementTransformer = {
+  type: 'element',
+  dependencies: [HorizontalRuleNode],
+  regExp: /^(-{3,}|\*{3,}|_{3,})\s*$/,
+  replace: (parentNode) => {
+    parentNode.replace($createHorizontalRuleNode());
+  },
+  export: (node) => {
+    if (!$isHorizontalRuleNode(node)) return null;
+    return '---';
+  },
+};
 
 /**
  * Handles <!-- weaver-sticky:UUID --> comment markers.
@@ -74,6 +93,7 @@ const LegacyAnchorTransformer: TextMatchTransformer = {
  * (footnotes, citations, etc.) — add them here, nowhere else.
  */
 export const WEAVER_TRANSFORMERS = [
+  HR_TRANSFORMER,
   ...TRANSFORMERS,
   StickyAnchorTransformer,
   LegacyAnchorTransformer,

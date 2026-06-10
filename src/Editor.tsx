@@ -31,7 +31,7 @@ import EditorToolbar from "./components/EditorToolbar";
 import { useTheme } from "./contexts/ThemeContext";
 
 const theme = {
-  paragraph: "mb-4 text-lg leading-relaxed text-zinc-100",
+  paragraph: "text-md leading-relaxed text-zinc-100 indent-4 font-serif",
   heading: {
     h1: "text-3xl font-bold mb-4 mt-6 text-zinc-100",
     h2: "text-2xl font-semibold mb-3 mt-5 text-zinc-100",
