@@ -6,15 +6,15 @@ Weaver is a minimalist, offline-first novel writing platform. It is a **Tauri 2 
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| UI framework | React 19 + TypeScript (strict) |
-| Editor | Lexical 0.42 (@lexical/react) |
-| Styling | Tailwind CSS 4 (utility classes only) |
-| Build tool | Vite 7 |
-| Desktop shell | Tauri 2 (Rust) |
-| Package manager | Yarn |
-| IPC | Tauri commands (`invoke`) |
+| Layer           | Technology                                   |
+| --------------- | -------------------------------------------- |
+| UI framework    | React 19 + TypeScript (strict)               |
+| Editor          | Lexical 0.42 (@lexical/react)                |
+| Styling         | Tailwind CSS 4 (utility classes only)        |
+| Build tool      | Vite 7                                       |
+| Desktop shell   | Tauri 2 (Rust)                               |
+| Package manager | Yarn                                         |
+| IPC             | Tauri commands (`invoke`)                    |
 | Target platform | Windows (built via GitHub Actions from WSL2) |
 
 ---
@@ -120,13 +120,13 @@ If you encounter something the issue didn't anticipate — an architectural conf
 
 ## GitHub Issue Labels
 
-| Label | Meaning |
-|-------|---------|
-| `backlog` | Captured but not yet specified |
-| `needs-decision` | Blocked on an open question — Manager must resolve |
-| `ready` | Fully specified, all dependencies closed, safe to implement |
-| `in-progress` | A Developer is actively working on this |
-| `blocked` | Developer hit a blocker mid-implementation |
+| Label            | Meaning                                                     |
+| ---------------- | ----------------------------------------------------------- |
+| `backlog`        | Captured but not yet specified                              |
+| `needs-decision` | Blocked on an open question — Manager must resolve          |
+| `ready`          | Fully specified, all dependencies closed, safe to implement |
+| `in-progress`    | A Developer is actively working on this                     |
+| `blocked`        | Developer hit a blocker mid-implementation                  |
 
 ---
 
@@ -136,30 +136,32 @@ If you encounter something the issue didn't anticipate — an architectural conf
 
 - **Component files**: PascalCase (`Editor.tsx`, `Sidebar.tsx`)
 - **Utility/hook files**: camelCase (`useProject.ts`, `fileSystem.ts`)
-- **Styling**: Tailwind utility classes only. Color palette: `zinc-900` (bg), `zinc-800` (panels), `zinc-700` (borders), `zinc-100` (text). No custom CSS unless Tailwind cannot express it.
-- **Dark theme only** — all components assume dark background.
-- **Layout model**: 2-pane flex row. Editor takes `flex-1`. Sidebars are fixed-width and collapsible. All tools (Outline, Codex, Preview, AI) live in the right sidebar area as swappable panels — never floating over the editor.
-- **Lexical editor**: Use plugin composition. Add functionality as Lexical plugins, not by modifying `Editor.tsx` core directly. The `LexicalComposer` namespace/theme is the extension point.
+- **Styling**: Tailwind utility classes, but **only semantic token utilities** — `bg-background`, `text-foreground`, `bg-card`, `border-border`, `bg-sidebar`, `text-muted-foreground`, etc. **Never hardcode raw color utilities** (`bg-zinc-900`, `text-zinc-100`, …). The semantic tokens are CSS variables defined in `src/index.css`; this indirection is what makes runtime theming possible. A raw `zinc-*` class cannot be themed and is treated as a bug.
+- **Theming model (Obsidian-style)**: A theme is a set of values for Weaver's documented CSS variables. The built-in "Default" theme ships in app CSS and expresses the dark look entirely in tokens. User themes live as raw CSS files in `.weaver/themes/<ThemeName>/theme.css` (+ `manifest.json`) and are applied by injecting their CSS into a single `<style id="weaver-active-theme">` element — variables cascade and the whole app (chrome + editor) restyles live, with no remount. There are two token namespaces: **chrome** (`--background`, `--foreground`, `--card`, `--border`, `--sidebar`, `--primary`, `--accent`, `--muted`, `--ring`, `--destructive`, …) and **editor surface** (`--editor-bg`, `--editor-text`, `--editor-font-family`, `--editor-font-size`, `--editor-line-height`, `--editor-measure`, `--editor-heading`, `--editor-quote-border`, `--editor-link`, `--editor-selection`, …). When adding a themeable surface, add or reuse a token — do not introduce a hardcoded color.
+- **Base mode**: dark base. Themes may override any token (including toward light), but the app does not ship a separate light mode.
+- **Lexical editor**: Use plugin composition. Add functionality as Lexical plugins, not by modifying `Editor.tsx` core directly. The Lexical `theme` object maps node types to classes that reference `--editor-*` variables (not hardcoded colors); structural classes (margins, padding, list bullets) may stay as plain Tailwind utilities.
 - **Tauri IPC**: Call Rust commands via `@tauri-apps/api/core` `invoke`. Always define TypeScript types for command arguments and return values in `src/types/`.
 - **No floating menus** over editor text — this is a hard UX rule from `ARCHITECTURE.md`.
 
 ### Rust / Tauri
 
-- All Tauri commands are defined in `src-tauri/src/lib.rs` and registered in `.invoke_handler(tauri::generate_handler![...])`.
-- Use `serde::{Serialize, Deserialize}` for all command input/output structs.
+- All Tauri commands are defined in their per-domain module (`project.rs`, `chapters.rs`, `codex.rs`, `stickies.rs`, `stats.rs`, `themes.rs`, …) and registered in `lib.rs`'s `.invoke_handler(tauri::generate_handler![...])`. `lib.rs` holds only `run()` + registration.
+- Use `serde::{Serialize, Deserialize}` for all command input/output structs, with `#[serde(rename_all = "camelCase")]` so JSON field names match the TypeScript interfaces.
 - File I/O goes through Tauri commands — the frontend never accesses the filesystem directly.
+- Writes are atomic: write to a hidden `.{name}.tmp` then `fs::rename` (see `util::atomic_write`).
 - Add new Cargo dependencies to `src-tauri/Cargo.toml` only when needed; prefer std where possible.
 
 ### On-Disk Project Structure
+
+Weaver projects are directories. **Content lives at the root; all app state lives in a hidden `.weaver/` directory.** The content layout stays pandoc-compatible (see `mattgemmell/pandoc-publish` pattern).
 
 Weaver projects are directories. The layout must be pandoc-compatible (see `mattgemmell/pandoc-publish` pattern). Agreed structure (see `memory.md` for rationale):
 
 ```
 <project-root>/
-  project.json              # title, author, id, created, etc.
+  project.json              # content/identity manifest: title, author, id, chapter order, etc.
   chapters/
-    01-chapter-title.md     # zero-padded chapter number prefix
-    01-chapter-title.notes.json   # outline/notes anchored to this chapter
+    chapter-title.md        # lowercase kebab-case slug; order tracked in project.json
     02-...
   codex/
     characters/
@@ -168,15 +170,22 @@ Weaver projects are directories. The layout must be pandoc-compatible (see `matt
       place-name.md
     items/
       item-name.md
-  themes/
-    default.json            # saved theme config
+  .weaver/                  # all app state — hidden, not user content
+    config.json             # active theme name + per-project app preferences
+    stats.json              # word-count history / daily progress
+    stickies/
+      <chapter-stem>.stickies.json
+    themes/
+      <ThemeName>/
+        manifest.json        # name, version, author, supported modes
+        theme.css            # overrides Weaver's documented CSS variables
 ```
 
-Filenames within `chapters/` and `codex/` use lowercase kebab-case with number prefix for chapters.
+Filenames within `chapters/` and `codex/` use lowercase kebab-case. Chapter order is stored in `project.json`'s `chapters: string[]`, not in filename prefixes (see `memory.md`). On opening a project, the backend migrates legacy layouts (root-level `stats.json` / `stickies/`) into `.weaver/` idempotently.
 
 ### State Management
 
-No global state library yet — use React `useState`/`useContext` until complexity demands more. Keep project-level state (current project, open chapter) in a `ProjectContext`. Editor state stays inside Lexical.
+No global state library yet — use React `useState`/`useContext` until complexity demands more. Project-level state (current project, open chapter) lives in `ProjectContext`; per-device prefs in a `SettingsContext` (persisted to `localStorage`); the active theme in `ThemeContext`. Editor state stays inside Lexical.
 
 ---
 

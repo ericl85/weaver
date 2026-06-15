@@ -74,6 +74,18 @@ Selecting a chapter spawns a new `ChapterEditorLayer` (keyed by filename) and st
 ### Codex editor: full Lexical instance (same as chapters)
 Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization as the chapter editor, not a plain textarea. Writers may want stylized text (bold, italic) in reference notes. The codex editor is a second `LexicalComposer` instance scoped to the sidebar panel — it does not share state with the chapter editor.
 
+### Theming: CSS-variable tokens + raw-CSS theme files, Obsidian-style (2026-06-15)
+Theming is **CSS-variable based**, not a high-level `Theme` config object. The old `Theme` struct (fontFamily/fontSize/backgroundColor/accentColor) and the `applyTheme(theme)` / `save_theme` / `load_theme` design are **scrapped** (issues #6, #7, #10 rewritten). Replacement model:
+
+- **Token contract** = a documented set of CSS variables themes target. Two namespaces: **chrome** (reuse the shadcn tokens already in `index.css` — `--background`, `--foreground`, `--card`, `--border`, `--sidebar`, `--primary`, `--accent`, `--muted`, `--ring`, `--destructive`) and **editor surface** (new `--editor-*` group: bg, text, font-family/size, line-height, measure, heading, quote, link, code, selection).
+- **A theme = raw CSS** that overrides those variables, stored as `.weaver/themes/<Name>/{manifest.json, theme.css}` (per-project, like Obsidian's `.obsidian/themes/`). The built-in **Default** is the `:root` token values shipped in app CSS (no file) and is the "no override" state.
+- **Applied by injecting** the active theme's CSS into a single `<style id="weaver-active-theme">` element. Variables cascade → chrome + editor restyle **live, no remount** (the old #10 "remount Lexical on theme change" plan is rejected).
+- Active theme persists per-project in `.weaver/config.json` (`activeTheme: string | null`).
+- **Hard rule (overrides CLAUDE.md "dark theme only" / "Tailwind utilities only"):** components must use **semantic token utilities** (`bg-background`, `text-foreground`, `border-border`…), never raw `zinc-*`. A hardcoded color is now a bug — it can't be themed. Sticky-category and progress-bar colors are exempt (functional data colors, not chrome). Dark is the base mode; themes may override toward light, but no separate light mode ships.
+
+### On-Disk: content at root, app state in `.weaver/` (2026-06-15)
+Clean separation — the user's novel (`project.json`, `chapters/`, `codex/`) stays at the project root for pandoc compatibility; **all Weaver app state moves into a hidden `.weaver/` directory**: `config.json` (active theme + prefs), `stats.json` (was root), `stickies/` (was root), `themes/`. Existing projects are migrated idempotently on `open_project` (move legacy `stats.json` + `stickies/` in; never delete the legacy copy until the new one is confirmed). `project.json` stays at root for now.
+
 ---
 
 ## Known Issues & Incomplete Areas
@@ -92,7 +104,7 @@ Codex entries use the same `RichTextPlugin` + Markdown ↔ Lexical serialization
 | Daily progress card | Complete (#32) | StatsContext seeds via update_daily_progress once per project open (waits for projectTotal); DailyGoalCard pinned bottom-right of center pane, hidden when no chapter active or no daily goal; amber/blue/emerald progress bars (shadcn Progress); canvas-confetti + CSS pulse on first goal crossing; dismissable via ×; View > Show Progress Card re-shows it (both custom and macOS native menu). |
 | Codex UI | Not started | No UI at all |
 | Markdown ↔ Lexical serialization | Complete (T-011) | src/lib/markdown.ts; WEAVER_TRANSFORMERS extends TRANSFORMERS with AnchorTransformer; markdownToEditorState / editorStateToMarkdown exported |
-| Theming UI | Not started | Colors hardcoded in Tailwind classes |
+| Theming | Re-specified, not started | CSS-variable tokens + raw-CSS theme files (Obsidian-style). Foundational: #10 (token contract + Default + editor wiring), #6 (`.weaver/` dir + migration). Then #33 (chrome zinc sweep), #34 (Rust theme commands), #7 (theme manager panel). Old `Theme` object scrapped. |
 | Tauri commands | Phase 1 complete | Manifest-based ordering; all structs use `#[serde(rename_all = "camelCase")]` so IPC JSON matches TypeScript interfaces |
 | Window size | 800×600 | Probably too small; may need updating |
 
