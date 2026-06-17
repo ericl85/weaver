@@ -3,7 +3,72 @@ use std::fs;
 use std::path::Path;
 use uuid::Uuid;
 use crate::stickies::StickyCategory;
-use crate::util::atomic_write;
+use crate::util::{atomic_write, weaver_dir};
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct WeaverConfig {
+    pub active_theme: Option<String>,
+}
+
+#[allow(dead_code)]
+pub(crate) fn read_weaver_config(project_path: &str) -> Result<WeaverConfig, String> {
+    let path = weaver_dir(project_path).join("config.json");
+    if !path.exists() {
+        return Ok(WeaverConfig::default());
+    }
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+pub(crate) fn write_weaver_config(project_path: &str, config: &WeaverConfig) -> Result<(), String> {
+    let path = weaver_dir(project_path).join("config.json");
+    let json = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
+    atomic_write(&path, json)
+}
+
+fn migrate_to_weaver_dir(project_path: &str) -> Result<(), String> {
+    let root = Path::new(project_path);
+    let weaver = weaver_dir(project_path);
+
+    crate::util::ensure_weaver_dir(project_path)?;
+
+    // Migrate legacy stats.json
+    let legacy_stats = root.join("stats.json");
+    let new_stats = weaver.join("stats.json");
+    if legacy_stats.exists() && !new_stats.exists() {
+        fs::rename(&legacy_stats, &new_stats)
+            .or_else(|_| fs::copy(&legacy_stats, &new_stats).map(|_| ()))
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Migrate legacy stickies/ directory (move each file individually)
+    let legacy_stickies = root.join("stickies");
+    let new_stickies = weaver.join("stickies");
+    if legacy_stickies.exists() && legacy_stickies.is_dir() {
+        let new_has_files = fs::read_dir(&new_stickies)
+            .map(|mut d| d.next().is_some())
+            .unwrap_or(false);
+        if !new_has_files {
+            for entry in fs::read_dir(&legacy_stickies).map_err(|e| e.to_string())? {
+                let entry = entry.map_err(|e| e.to_string())?;
+                let src = entry.path();
+                let dst = new_stickies.join(entry.file_name());
+                fs::rename(&src, &dst)
+                    .or_else(|_| fs::copy(&src, &dst).map(|_| ()))
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+
+    // Write default config.json if absent
+    let config_path = weaver.join("config.json");
+    if !config_path.exists() {
+        write_weaver_config(project_path, &WeaverConfig::default())?;
+    }
+
+    Ok(())
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -47,13 +112,14 @@ pub(crate) fn write_project_json(project_path: &str, project: &Project) -> Resul
 #[tauri::command]
 pub fn create_project(title: String, author: String, path: String) -> Result<Project, String> {
     let root = Path::new(&path).join(&title);
+    let root_str = root.to_string_lossy().to_string();
 
     fs::create_dir_all(root.join("chapters")).map_err(|e| e.to_string())?;
-    fs::create_dir_all(root.join("stickies")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/characters")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/places")).map_err(|e| e.to_string())?;
     fs::create_dir_all(root.join("codex/items")).map_err(|e| e.to_string())?;
-    fs::create_dir_all(root.join("themes")).map_err(|e| e.to_string())?;
+    crate::util::ensure_weaver_dir(&root_str)?;
+    write_weaver_config(&root_str, &WeaverConfig::default())?;
 
     let now = chrono::Utc::now().to_rfc3339();
     let default_categories = vec![
@@ -84,7 +150,8 @@ pub fn open_project(path: String) -> Result<Project, String> {
     let json_path = Path::new(&path).join("project.json");
     let content = fs::read_to_string(&json_path).map_err(|e| e.to_string())?;
     let mut project: Project = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    project.root_path = path;
+    project.root_path = path.clone();
+    migrate_to_weaver_dir(&path)?;
     Ok(project)
 }
 

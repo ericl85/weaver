@@ -1,5 +1,16 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+pub(crate) fn weaver_dir(project_path: &str) -> PathBuf {
+    Path::new(project_path).join(".weaver")
+}
+
+pub(crate) fn ensure_weaver_dir(project_path: &str) -> Result<(), String> {
+    let weaver = weaver_dir(project_path);
+    fs::create_dir_all(weaver.join("themes")).map_err(|e| e.to_string())?;
+    fs::create_dir_all(weaver.join("stickies")).map_err(|e| e.to_string())?;
+    Ok(())
+}
 
 pub(crate) fn title_to_slug(title: &str) -> String {
     title

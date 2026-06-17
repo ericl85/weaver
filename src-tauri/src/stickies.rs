@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use uuid::Uuid;
 use crate::project::{read_project_json, write_project_json};
 use crate::util::atomic_write;
@@ -26,7 +26,7 @@ pub struct Sticky {
 
 pub(crate) fn stickies_path(project_path: &str, chapter_filename: &str) -> PathBuf {
     let stem = chapter_filename.trim_end_matches(".md");
-    Path::new(project_path)
+    crate::util::weaver_dir(project_path)
         .join("stickies")
         .join(format!("{}.stickies.json", stem))
 }

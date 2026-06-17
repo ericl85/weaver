@@ -30,7 +30,7 @@ pub struct DayEntry {
 }
 
 fn stats_path(project_path: &str) -> std::path::PathBuf {
-    Path::new(project_path).join("stats.json")
+    crate::util::weaver_dir(project_path).join("stats.json")
 }
 
 fn read_stats_from_disk(project_path: &str) -> Result<Stats, String> {
