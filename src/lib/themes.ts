@@ -1,22 +1,65 @@
-import type { Theme } from "../types";
-
-export const DEFAULT_THEME: Theme = {
-  name: "Default",
-  fontFamily: "Georgia, serif",
-  fontSize: 72,
-  lineHeight: 1.75,
-  backgroundColor: "#18181b", // zinc-900
-  textColor: "#0000ff", // zinc-100
-  accentColor: "#a1a1aa", // zinc-400
-  textAlign: "justify",
+// Lexical theme: maps node types to CSS class names.
+// Color/font/size come from --editor-* CSS variable classes (editor-*).
+// Structural utilities (spacing, indents, bullets) stay as Tailwind classes.
+// Syntax highlight classes are kept as raw color utilities — they carry
+// semantic meaning (keyword, error, string) and are not chrome colors.
+export const lexicalTheme = {
+  paragraph: "editor-paragraph indent-4",
+  heading: {
+    h1: "editor-h1 font-bold mb-4 mt-6",
+    h2: "editor-h2 font-semibold mb-3 mt-5",
+    h3: "editor-h3 font-semibold mb-2 mt-4",
+  },
+  quote: "editor-quote border-l-4 pl-4 italic my-4",
+  list: {
+    ul: "list-disc pl-6 mb-4",
+    ol: "list-decimal pl-6 mb-4",
+    listitem: "mb-1",
+    nested: {
+      listitem: "list-none",
+    },
+  },
+  code: "editor-code block font-mono rounded p-4 my-4 text-sm overflow-x-auto",
+  codeHighlight: {
+    atrule: "text-blue-400",
+    attr: "text-green-400",
+    boolean: "text-orange-400",
+    builtin: "text-yellow-400",
+    cdata: "text-zinc-500",
+    char: "text-green-400",
+    class: "text-yellow-400",
+    "class-name": "text-yellow-400",
+    comment: "text-zinc-500 italic",
+    constant: "text-orange-400",
+    deleted: "text-red-400",
+    doctype: "text-zinc-500",
+    entity: "text-orange-400",
+    function: "text-yellow-400",
+    important: "text-orange-400",
+    inserted: "text-green-400",
+    keyword: "text-blue-400",
+    namespace: "text-zinc-300",
+    number: "text-orange-400",
+    operator: "text-zinc-300",
+    prolog: "text-zinc-500",
+    property: "text-green-400",
+    punctuation: "text-zinc-400",
+    regex: "text-green-400",
+    selector: "text-green-400",
+    string: "text-green-400",
+    symbol: "text-orange-400",
+    tag: "text-red-400",
+    url: "text-blue-400",
+    variable: "text-orange-400",
+  },
+  hr: "editor-hr my-6 border-t",
+  link: "editor-link underline cursor-pointer",
+  text: {
+    bold: "font-bold",
+    italic: "italic",
+    strikethrough: "line-through",
+    code: "editor-inline-code font-mono rounded px-1 py-0.5 text-sm",
+    underline: "underline",
+    underlineStrikethrough: "underline line-through",
+  },
 };
-
-export function applyTheme(theme: Theme): void {
-  const root = document.documentElement;
-  root.style.setProperty("--theme-font-family", theme.fontFamily);
-  root.style.setProperty("--theme-font-size", `${theme.fontSize}px`);
-  root.style.setProperty("--theme-line-height", String(theme.lineHeight));
-  root.style.setProperty("--theme-bg", theme.backgroundColor);
-  root.style.setProperty("--theme-text", theme.textColor);
-  root.style.setProperty("--theme-accent", theme.accentColor);
-}

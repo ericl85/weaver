@@ -123,6 +123,27 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* ── Weaver editor surface token contract ──────────────────────────────
+     Themes override these variables in their theme.css to restyle the
+     writing surface without touching chrome tokens.
+     ────────────────────────────────────────────────────────────────────── */
+  --editor-bg:          oklch(0.145 0 0);                  /* writing surface bg */
+  --editor-text:        oklch(0.967 0.001 286.375);        /* body prose text */
+  --editor-font-family: Georgia, 'Times New Roman', serif; /* body prose font */
+  --editor-font-size:   1rem;
+  --editor-line-height: 1.625;                             /* leading-relaxed */
+  --editor-measure:     48rem;                             /* max prose column width */
+  --editor-heading:     oklch(0.967 0.001 286.375);        /* heading text */
+  --editor-h1-size:     1.875rem;                          /* text-3xl */
+  --editor-h2-size:     1.5rem;                            /* text-2xl */
+  --editor-h3-size:     1.25rem;                           /* text-xl */
+  --editor-quote-text:  oklch(0.707 0.022 261.325);        /* blockquote text */
+  --editor-quote-border:oklch(0.442 0.017 285.786);        /* blockquote left border */
+  --editor-link:        oklch(0.703 0.165 254.624);        /* link text */
+  --editor-code-bg:     oklch(0.274 0.006 286.033);        /* code block / inline bg */
+  --editor-code-text:   oklch(0.872 0.006 286.286);        /* code text */
+  --editor-selection:   oklch(0.488 0.243 264.376 / 30%); /* text selection highlight */
 }
 
 @layer base {
@@ -136,3 +157,56 @@ body {
     @apply font-sans;
   }
 }
+
+/* ── Editor surface styles ─────────────────────────────────────────────────
+   These classes consume the --editor-* token contract defined in .dark above.
+   Lexical theme node classes reference these; chrome components do not.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.editor-surface {
+  background: var(--editor-bg);
+}
+
+/* Applied to the ContentEditable — sets base font/color inherited by all nodes */
+.editor-content {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
+  line-height: var(--editor-line-height);
+  color: var(--editor-text);
+}
+
+.editor-content ::selection {
+  background-color: var(--editor-selection);
+}
+
+/* Constrains the prose column width */
+.editor-measure {
+  max-width: var(--editor-measure);
+}
+
+/* Node-level classes referenced by lexicalTheme */
+.editor-paragraph { color: var(--editor-text); }
+
+.editor-h1 { font-size: var(--editor-h1-size); color: var(--editor-heading); }
+.editor-h2 { font-size: var(--editor-h2-size); color: var(--editor-heading); }
+.editor-h3 { font-size: var(--editor-h3-size); color: var(--editor-heading); }
+
+.editor-quote {
+  color: var(--editor-quote-text);
+  border-color: var(--editor-quote-border);
+}
+
+.editor-link         { color: var(--editor-link); }
+.editor-link:hover   { opacity: 0.8; }
+
+.editor-code {
+  background: var(--editor-code-bg);
+  color: var(--editor-code-text);
+}
+
+.editor-inline-code {
+  background: var(--editor-code-bg);
+  color: var(--editor-code-text);
+}
+
+.editor-hr { border-color: var(--editor-quote-border); }
