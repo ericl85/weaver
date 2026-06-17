@@ -86,7 +86,7 @@ function AppShell() {
 
   if (!project) {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-zinc-900 text-zinc-100">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground">
         {titleBar}
         <div className="flex-1 overflow-hidden">
           <WelcomeScreen />
@@ -96,16 +96,16 @@ function AppShell() {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-zinc-900 text-zinc-100">
+    <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground">
       {titleBar}
       <div className="flex-1 overflow-hidden flex">
         {/* Left pane */}
         {leftCollapsed ? (
-          <div className="w-7 shrink-0 flex flex-col items-center pt-2 bg-zinc-800 border-r border-zinc-700">
+          <div className="w-7 shrink-0 flex flex-col items-center pt-2 bg-sidebar border-r border-sidebar-border">
             <button
               onClick={() => setLeftCollapsed(false)}
               title="Expand panel"
-              className="text-zinc-500 hover:text-zinc-300 text-xs"
+              className="text-muted-foreground hover:text-foreground text-xs"
             >
               ›
             </button>

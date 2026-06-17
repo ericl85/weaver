@@ -31,8 +31,7 @@ function ColorPicker({ value, onChange }: ColorPickerProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className="w-5 h-5 rounded border border-zinc-600 shrink-0 hover:border-zinc-400 transition-colors focus:outline-none focus:ring-1 focus:ring-zinc-400"
-          style={{}}
+          className="w-5 h-5 rounded border border-border shrink-0 hover:border-foreground transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
           title="Change color"
         >
           <span className={`block w-full h-full rounded ${colors.dot}`} />
@@ -48,8 +47,8 @@ function ColorPicker({ value, onChange }: ColorPickerProps) {
               onClick={() => { onChange(name); setOpen(false); }}
               className={`w-5 h-5 rounded border transition-colors focus:outline-none ${
                 isSelected
-                  ? 'border-zinc-300 ring-1 ring-zinc-300'
-                  : 'border-zinc-600 hover:border-zinc-400'
+                  ? 'border-ring ring-1 ring-ring'
+                  : 'border-border hover:border-foreground'
               }`}
               title={name}
             >
@@ -97,7 +96,7 @@ function CategoryRow({ category, onUpdate, onDelete }: CategoryRowProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 py-2 border-b border-zinc-800 last:border-0 group">
+    <div className="flex items-center gap-2 py-2 border-b border-border last:border-0 group">
       <ColorPicker value={category.color} onChange={handleColorChange} />
 
       {editing ? (
@@ -111,11 +110,11 @@ function CategoryRow({ category, onUpdate, onDelete }: CategoryRowProps) {
             if (e.key === 'Enter') { e.preventDefault(); commitName(); }
             else if (e.key === 'Escape') { setName(category.name); setEditing(false); }
           }}
-          className="flex-1 h-7 rounded bg-zinc-800 border border-zinc-500 px-2 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+          className="flex-1 h-7 rounded bg-card border border-border px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
         />
       ) : (
         <span
-          className="flex-1 text-sm text-zinc-200 cursor-text hover:text-zinc-100"
+          className="flex-1 text-sm text-foreground cursor-text"
           onClick={() => setEditing(true)}
           title="Click to rename"
         >
@@ -125,7 +124,7 @@ function CategoryRow({ category, onUpdate, onDelete }: CategoryRowProps) {
 
       <button
         onClick={() => onDelete(category.id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-rose-400 text-xs px-1 focus:outline-none"
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive text-xs px-1 focus:outline-none"
         title="Delete category"
       >
         ✕
@@ -188,11 +187,11 @@ export default function CategorySettings() {
   return (
     <>
       <div className="flex flex-col gap-4">
-        <h2 className="text-sm font-semibold text-zinc-100">Sticky Note Categories</h2>
+        <h2 className="text-sm font-semibold text-foreground">Sticky Note Categories</h2>
 
         <div>
           {categories.length === 0 ? (
-            <p className="text-xs text-zinc-500 py-3 text-center">
+            <p className="text-xs text-muted-foreground py-3 text-center">
               No categories yet — add one below.
             </p>
           ) : (
@@ -210,7 +209,7 @@ export default function CategorySettings() {
         </div>
 
         {/* Add new category */}
-        <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
+        <div className="flex items-center gap-2 pt-2 border-t border-border">
           <ColorPicker value={newColor} onChange={setNewColor} />
           <input
             type="text"
@@ -220,7 +219,7 @@ export default function CategorySettings() {
               if (e.key === 'Enter' && newName.trim()) handleAdd();
             }}
             placeholder="New category name…"
-            className="flex-1 h-7 rounded bg-zinc-800 border border-zinc-600 px-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            className="flex-1 h-7 rounded bg-card border border-border px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <Button
             size="sm"

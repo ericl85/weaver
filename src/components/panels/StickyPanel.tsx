@@ -47,10 +47,10 @@ function AddStickyPopover({ categories, onAdd }: AddStickyPopoverProps) {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 flex flex-col gap-2 p-3">
         {categories.length === 0 ? (
-          <p className="text-xs text-zinc-500">No categories defined in project.json.</p>
+          <p className="text-xs text-muted-foreground">No categories defined in project.json.</p>
         ) : (
           <>
-            <p className="text-xs text-zinc-400 font-medium">Category</p>
+            <p className="text-xs text-muted-foreground font-medium">Category</p>
             <div className="flex flex-wrap gap-1">
               {categories.map(cat => {
                 const colors = categoryColorClasses(cat.color);
@@ -61,8 +61,8 @@ function AddStickyPopover({ categories, onAdd }: AddStickyPopoverProps) {
                     onClick={() => setSelectedCategoryId(cat.id)}
                     className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs border transition-colors ${
                       isSelected
-                        ? 'border-zinc-400 bg-zinc-700 text-zinc-100'
-                        : 'border-zinc-600 bg-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                        ? 'border-border bg-accent text-accent-foreground'
+                        : 'border-border bg-card text-muted-foreground hover:border-ring hover:text-foreground'
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`} />
@@ -75,7 +75,7 @@ function AddStickyPopover({ categories, onAdd }: AddStickyPopoverProps) {
               value={text}
               onChange={e => setText(e.target.value)}
               placeholder="Sticky note text…"
-              className="min-h-[80px] text-xs bg-zinc-900 border-zinc-600 text-zinc-200 resize-none"
+              className="min-h-[80px] text-xs bg-background border-border text-foreground resize-none"
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -141,8 +141,8 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
   }
 
   const cardClass = isUnattached
-    ? 'mb-2 p-3 gap-0 ring-0 rounded-lg bg-zinc-800 border border-dashed border-zinc-600'
-    : `mb-2 p-3 gap-0 ring-0 rounded-lg bg-zinc-800 border-l-4 ${colors.border}`;
+    ? 'mb-2 p-3 gap-0 ring-0 rounded-lg bg-card border border-dashed border-border'
+    : `mb-2 p-3 gap-0 ring-0 rounded-lg bg-card border-l-4 ${colors.border}`;
 
   function handleCategoryClick() {
     if (isUnattached || !sticky.anchorId) return;
@@ -152,7 +152,7 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
 
   return (
     <Card
-      className={`group relative ${cardClass} ${highlighted ? 'outline outline-1 outline-zinc-400' : ''}`}
+      className={`group relative ${cardClass} ${highlighted ? 'outline outline-1 outline-ring' : ''}`}
       style={{ opacity: isDragging ? 0.4 : opacity }}
       data-sticky-id={sticky.id}
     >
@@ -168,7 +168,7 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
             ref={setDragRef}
             {...listeners}
             {...attributes}
-            className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 mr-0.5 select-none"
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground mr-0.5 select-none"
             title="Drag to anchor in manuscript"
             onClick={e => e.stopPropagation()}
           >
@@ -179,7 +179,7 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
         </div>
         <button
           onClick={() => onDelete(sticky.id)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-zinc-300 text-xs leading-none px-1"
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground text-xs leading-none px-1"
           title="Delete sticky"
         >
           ✕
@@ -192,7 +192,7 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
           autoFocus
           value={editText}
           onChange={e => setEditText(e.target.value)}
-          className="text-sm text-zinc-300 bg-zinc-900 border-zinc-600 min-h-[60px] resize-none"
+          className="text-sm text-foreground bg-background border-border min-h-[60px] resize-none"
           onBlur={commitEdit}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -205,19 +205,19 @@ function StickyCard({ sticky, category, highlighted, opacity, onEdit, onDelete }
         />
       ) : (
         <p
-          className="text-sm text-zinc-300 cursor-text whitespace-pre-wrap"
+          className="text-sm text-foreground cursor-text whitespace-pre-wrap"
           onClick={startEdit}
         >
-          {sticky.text || <span className="text-zinc-500 italic">Empty note</span>}
+          {sticky.text || <span className="text-muted-foreground italic">Empty note</span>}
         </p>
       )}
 
       {/* Footer row */}
       <div className="mt-2 flex justify-end">
         {isUnattached ? (
-          <span className="text-xs text-zinc-600">○ Unattached</span>
+          <span className="text-xs text-muted-foreground">○ Unattached</span>
         ) : (
-          <span className="text-xs text-zinc-500">📌 Anchored</span>
+          <span className="text-xs text-muted-foreground">📌 Anchored</span>
         )}
       </div>
     </Card>
@@ -347,7 +347,7 @@ export default function StickyPanel() {
 
   if (!activeChapter) {
     return (
-      <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm px-4 text-center">
+      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm px-4 text-center">
         Open a chapter to view sticky notes.
       </div>
     );
@@ -356,7 +356,7 @@ export default function StickyPanel() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Toolbar */}
-      <div className="shrink-0 px-3 py-2 border-b border-zinc-700 flex flex-wrap items-center gap-2">
+      <div className="shrink-0 px-3 py-2 border-b border-border flex flex-wrap items-center gap-2">
         <AddStickyPopover categories={categories} onAdd={handleAdd} />
         {categories.length > 0 && (
           <ToggleGroup
@@ -371,7 +371,7 @@ export default function StickyPanel() {
                 <ToggleGroupItem
                   key={cat.id}
                   value={cat.id}
-                  className="flex items-center gap-1 h-5 px-2 text-xs rounded-full border border-zinc-600 bg-zinc-900 data-[state=on]:bg-zinc-700 data-[state=on]:border-zinc-500 data-[state=on]:text-zinc-200 text-zinc-400"
+                  className="flex items-center gap-1 h-5 px-2 text-xs rounded-full border border-border bg-background data-[state=on]:bg-accent data-[state=on]:border-accent data-[state=on]:text-accent-foreground text-muted-foreground"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
                   {cat.name}
@@ -385,8 +385,8 @@ export default function StickyPanel() {
       {/* Card list */}
       <div className="flex-1 overflow-y-auto p-3">
         {anchored.length === 0 && unattached.length === 0 ? (
-          <p className="text-xs text-zinc-600 text-center mt-8">
-            No sticky notes yet.{'\u00a0'}Use "+ Add" to create one.
+          <p className="text-xs text-muted-foreground text-center mt-8">
+            No sticky notes yet.{' '}Use "+ Add" to create one.
           </p>
         ) : (
           <>
@@ -412,9 +412,9 @@ export default function StickyPanel() {
               <>
                 {anchored.length > 0 && (
                   <div className="flex items-center gap-2 my-3">
-                    <div className="flex-1 border-t border-zinc-700" />
-                    <span className="text-xs text-zinc-600">Unattached</span>
-                    <div className="flex-1 border-t border-zinc-700" />
+                    <div className="flex-1 border-t border-border" />
+                    <span className="text-xs text-muted-foreground">Unattached</span>
+                    <div className="flex-1 border-t border-border" />
                   </div>
                 )}
                 {unattached.map(sticky => {

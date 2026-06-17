@@ -39,11 +39,10 @@ const PANEL_ICONS: Record<PanelId, React.ReactNode> = {
 
 const PANELS: PanelId[] = ['stickies', 'codex', 'ai'];
 
-// Panel slot — T-022 will fill in codex/ai
 function PanelContent({ panel }: { panel: PanelId }) {
   if (panel === 'stickies') return <StickyPanel />;
   return (
-    <div className="flex-1 flex items-center justify-center text-zinc-600 text-sm">
+    <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
       {PANEL_LABELS[panel]} — coming soon
     </div>
   );
@@ -57,18 +56,18 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex shrink-0 border-l border-zinc-700">
+    <div className="flex shrink-0 border-l border-sidebar-border">
       {/* Panel content area — shown when a panel is active */}
       {activePanel && (
-        <div className="w-64 bg-zinc-800 border-r border-zinc-700 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700">
-            <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+        <div className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-sidebar-border">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {PANEL_LABELS[activePanel]}
             </h2>
             <button
               onClick={() => setActivePanel(null)}
               title="Close panel"
-              className="text-zinc-500 hover:text-zinc-300 text-xs leading-none"
+              className="text-muted-foreground hover:text-foreground text-xs leading-none"
             >
               ✕
             </button>
@@ -78,7 +77,7 @@ export default function Sidebar() {
       )}
 
       {/* Icon strip — always visible */}
-      <div className="w-10 bg-zinc-800 flex flex-col items-center py-2 gap-1">
+      <div className="w-10 bg-sidebar flex flex-col items-center py-2 gap-1">
         {PANELS.map(panel => (
           <SidebarIcon
             key={panel}

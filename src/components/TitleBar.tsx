@@ -123,12 +123,12 @@ export default function TitleBar({
   return (
     <div
       ref={barRef}
-      className={`h-8 shrink-0 flex items-stretch bg-zinc-800 border-b border-zinc-700 select-none${isMac ? ' pl-[72px]' : ''}`}
+      className={`h-8 shrink-0 flex items-stretch bg-sidebar border-b border-sidebar-border select-none${isMac ? ' pl-[72px]' : ''}`}
       data-tauri-drag-region
     >
       {/* Branding */}
       <div
-        className="px-3 flex items-center text-zinc-100 text-sm font-semibold tracking-wide pointer-events-none"
+        className="px-3 flex items-center text-foreground text-sm font-semibold tracking-wide pointer-events-none"
         data-tauri-drag-region
       >
         Weaver
@@ -139,8 +139,8 @@ export default function TitleBar({
         {menuOrder.map(id => (
           <div key={id} className="relative">
             <button
-              className={`h-full px-3 text-xs text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 focus:outline-none ${
-                openMenu === id ? 'bg-zinc-700 text-zinc-100' : ''
+              className={`h-full px-3 text-xs text-foreground/80 hover:text-foreground hover:bg-accent focus:outline-none ${
+                openMenu === id ? 'bg-accent text-accent-foreground' : ''
               }`}
               onMouseDown={(e) => { e.stopPropagation(); toggleMenu(id); }}
               onMouseEnter={() => hoverMenu(id)}
@@ -149,10 +149,10 @@ export default function TitleBar({
             </button>
 
             {openMenu === id && (
-              <div className="absolute top-full left-0 z-50 min-w-48 bg-zinc-800 border border-zinc-700 shadow-lg py-1">
+              <div className="absolute top-full left-0 z-50 min-w-48 bg-card border border-border shadow-lg py-1">
                 {menus[id].map((entry, i) => {
                   if ('separator' in entry && entry.separator) {
-                    return <div key={i} className="my-1 border-t border-zinc-700" />;
+                    return <div key={i} className="my-1 border-t border-border" />;
                   }
                   const item = entry as MenuItem;
                   return (
@@ -161,14 +161,14 @@ export default function TitleBar({
                       disabled={item.disabled}
                       className={`w-full flex items-center justify-between px-4 py-1 text-xs text-left whitespace-nowrap ${
                         item.disabled
-                          ? 'text-zinc-600 cursor-default'
-                          : 'text-zinc-200 hover:bg-zinc-700 hover:text-zinc-100'
+                          ? 'text-muted-foreground/50 cursor-default'
+                          : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                       }`}
                       onMouseDown={(e) => { e.stopPropagation(); if (!item.disabled) runItem(item.action); }}
                     >
                       <span>{item.label}</span>
                       {item.shortcut && (
-                        <span className="ml-8 text-zinc-500">{item.shortcut}</span>
+                        <span className="ml-8 text-muted-foreground">{item.shortcut}</span>
                       )}
                     </button>
                   );
@@ -182,7 +182,7 @@ export default function TitleBar({
       {/* Drag region spacer */}
       <div className="flex-1 flex items-center justify-end" data-tauri-drag-region>
         {projectTotal !== null && (
-          <span className="text-xs text-zinc-500 mr-3 tabular-nums" data-tauri-drag-region>
+          <span className="text-xs text-muted-foreground mr-3 tabular-nums" data-tauri-drag-region>
             {projectTotal.toLocaleString()} words
           </span>
         )}
@@ -193,7 +193,7 @@ export default function TitleBar({
         title="Project Settings (Ctrl+,)"
         disabled={!project}
         onClick={onOpenSettings}
-        className="w-8 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 disabled:opacity-30 disabled:pointer-events-none"
+        className="w-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
@@ -205,7 +205,7 @@ export default function TitleBar({
       {!isMac && <div className="flex items-stretch">
         <button
           title="Minimize"
-          className="w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
+          className="w-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent"
           onMouseDown={(e) => { e.stopPropagation(); appWindow.minimize(); }}
         >
           <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor">
@@ -214,7 +214,7 @@ export default function TitleBar({
         </button>
         <button
           title="Maximize / Restore"
-          className="w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700"
+          className="w-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent"
           onMouseDown={(e) => { e.stopPropagation(); appWindow.toggleMaximize(); }}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
@@ -223,7 +223,7 @@ export default function TitleBar({
         </button>
         <button
           title="Close"
-          className="w-10 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-red-600"
+          className="w-10 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-red-600"
           onMouseDown={(e) => { e.stopPropagation(); appWindow.close(); }}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">

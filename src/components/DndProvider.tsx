@@ -54,9 +54,9 @@ function DragOverlayContent() {
     return (
       <div
         style={{ pointerEvents: 'none' }}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-600 bg-zinc-800 shadow-lg text-xs text-zinc-200 cursor-grabbing select-none"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-card shadow-lg text-xs text-foreground cursor-grabbing select-none"
       >
-        <span className="w-2 h-2 rounded-full shrink-0 bg-zinc-400" />
+        <span className="w-2 h-2 rounded-full shrink-0 bg-muted-foreground" />
         {chapter?.title ?? 'Chapter'}
       </div>
     );
@@ -84,7 +84,7 @@ function DragOverlayContent() {
   return (
     <div
       style={{ pointerEvents: 'none' }}
-      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-600 bg-zinc-800 shadow-lg text-xs text-zinc-200 cursor-grabbing select-none`}
+      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-card shadow-lg text-xs text-foreground cursor-grabbing select-none`}
     >
       <span className={`w-2 h-2 rounded-full shrink-0 ${colorDot(color)}`} />
       {label}

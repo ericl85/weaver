@@ -41,10 +41,10 @@ export default function DailyGoalCard() {
   }
 
   return (
-    <div className="absolute bottom-8 right-4 z-10 w-52 rounded-lg bg-zinc-800/80 backdrop-blur-sm border border-zinc-700 p-3 flex flex-col gap-2.5 shadow-lg">
+    <div className="absolute bottom-8 right-4 z-10 w-52 rounded-lg bg-card/80 backdrop-blur-sm border border-border p-3 flex flex-col gap-2.5 shadow-lg">
       <button
         onClick={() => setProgressDismissed(true)}
-        className="absolute top-1.5 right-2 text-zinc-500 hover:text-zinc-300 text-xs leading-none"
+        className="absolute top-1.5 right-2 text-muted-foreground hover:text-foreground text-xs leading-none"
         aria-label="Dismiss"
       >
         ×
@@ -52,13 +52,13 @@ export default function DailyGoalCard() {
 
       {/* Daily goal row */}
       <div className="flex flex-col gap-1">
-        <span className={`text-xs font-medium ${dailyNegative ? 'text-red-400' : dailyOver ? 'text-emerald-400' : 'text-zinc-300'}`}>
+        <span className={`text-xs font-medium ${dailyNegative ? 'text-red-400' : dailyOver ? 'text-emerald-400' : 'text-foreground'}`}>
           {dailyNegative ? `−${formatNum(dailyProgress)}` : formatNum(dailyProgress)} / {formatNum(dailyGoal)} today
           {dailyOver && ' ✓'}
         </span>
         <Progress
           value={dailyPct}
-          className={`h-1.5 bg-zinc-700 ${pulsing ? 'animate-pulse' : ''}`}
+          className={`h-1.5 bg-secondary ${pulsing ? 'animate-pulse' : ''}`}
           indicatorClassName={dailyOver ? 'bg-emerald-400' : 'bg-amber-400'}
         />
       </div>
@@ -66,10 +66,10 @@ export default function DailyGoalCard() {
       {/* Project goal row */}
       {projectGoal != null && projectPct !== null && projectTotal !== null && (
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-muted-foreground">
             {formatNum(projectTotal)} / {formatNum(projectGoal)} project
           </span>
-          <Progress value={projectPct} className="h-1.5 bg-zinc-700" indicatorClassName="bg-blue-400" />
+          <Progress value={projectPct} className="h-1.5 bg-secondary" indicatorClassName="bg-blue-400" />
         </div>
       )}
     </div>

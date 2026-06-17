@@ -170,7 +170,7 @@ export default function ChapterStackManager() {
 
   if (openChapters.length === 0) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center text-zinc-600 text-sm">
+      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
         Open a chapter to start writing.
       </div>
     );
@@ -198,8 +198,8 @@ export default function ChapterStackManager() {
         )}
       </div>
       {/* Status bar as a real flex child — never overlaps the editor or scrollbar */}
-      <div className="h-6 flex-shrink-0 flex items-center justify-end px-4 bg-zinc-900 border-t border-zinc-800 pointer-events-none">
-        <span className="text-xs text-zinc-600">
+      <div className="h-6 flex-shrink-0 flex items-center justify-end px-4 bg-background border-t border-border pointer-events-none">
+        <span className="text-xs text-muted-foreground">
           {activeFilename != null ? `${wordCounts[activeFilename] ?? 0} words` : ''}
         </span>
       </div>

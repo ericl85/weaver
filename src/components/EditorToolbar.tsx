@@ -38,13 +38,13 @@ function btnClass(active: boolean) {
   return (
     'px-2 py-0.5 rounded text-xs transition-colors ' +
     (active
-      ? 'bg-zinc-700 text-zinc-100'
-      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/60')
+      ? 'bg-accent text-accent-foreground'
+      : 'text-muted-foreground hover:text-foreground hover:bg-accent/60')
   );
 }
 
 function Sep() {
-  return <div className="w-px h-4 bg-zinc-700 mx-1 shrink-0" />;
+  return <div className="w-px h-4 bg-border mx-1 shrink-0" />;
 }
 
 export default function EditorToolbar() {
@@ -137,7 +137,7 @@ export default function EditorToolbar() {
   );
 
   return (
-    <div className="flex items-center gap-0.5 px-3 py-1.5 bg-zinc-800 border-b border-zinc-700 shrink-0 flex-wrap">
+    <div className="flex items-center gap-0.5 px-3 py-1.5 bg-card border-b border-border shrink-0 flex-wrap">
       {/* Text formatting */}
       <button
         className={btnClass(fmt.bold)}
@@ -261,7 +261,7 @@ export default function EditorToolbar() {
         onPressedChange={setBadgesVisible}
         title={badgesVisible ? 'Hide sticky badges' : 'Show sticky badges'}
         aria-label="Toggle sticky badges"
-        className="text-zinc-400 data-[state=on]:text-zinc-100"
+        className="text-muted-foreground data-[state=on]:text-foreground"
       >
         <span className="text-[11px]">📌</span>
       </Toggle>

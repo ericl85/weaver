@@ -54,7 +54,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-xl bg-zinc-900 text-zinc-100 ring-1 ring-zinc-700 shadow-xl duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-xl bg-background text-foreground ring-1 ring-border shadow-xl duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -62,7 +62,7 @@ function DialogContent({
         {children}
         <DialogPrimitive.Close
           data-slot="dialog-close"
-          className="absolute top-3 right-3 rounded p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-colors focus:outline-none"
+          className="absolute top-3 right-3 rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none"
         >
           <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <line x1="0" y1="0" x2="12" y2="12" />
@@ -102,7 +102,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-sm font-semibold text-zinc-100", className)}
+      className={cn("text-sm font-semibold text-foreground", className)}
       {...props}
     />
   )
@@ -115,7 +115,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-xs text-zinc-400", className)}
+      className={cn("text-xs text-muted-foreground", className)}
       {...props}
     />
   )

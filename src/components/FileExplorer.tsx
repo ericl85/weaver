@@ -43,7 +43,7 @@ function TreeNodeItem({ node, depth, onOpenFile }: NodeProps) {
         <button
           onClick={() => setOpen((o) => !o)}
           style={{ paddingLeft: `${0.75 + depth * 0.75}rem` }}
-          className="w-full text-left py-0.5 text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1 truncate"
+          className="w-full text-left py-0.5 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 truncate"
         >
           <span className="shrink-0">{open ? '▾' : '▸'}</span>
           <span className="truncate">{node.name}/</span>
@@ -59,7 +59,7 @@ function TreeNodeItem({ node, depth, onOpenFile }: NodeProps) {
     <button
       onClick={() => onOpenFile(node.path)}
       style={{ paddingLeft: `${1.5 + depth * 0.75}rem` }}
-      className="w-full text-left py-0.5 pr-3 text-xs text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700/50 truncate"
+      className="w-full text-left py-0.5 pr-3 text-xs text-foreground hover:text-foreground hover:bg-accent/50 truncate"
     >
       {node.name}
     </button>

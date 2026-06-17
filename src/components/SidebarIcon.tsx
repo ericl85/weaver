@@ -14,8 +14,8 @@ export default function SidebarIcon({ icon, label, active, onClick }: SidebarIco
       onClick={onClick}
       className={`w-10 h-10 flex items-center justify-center rounded transition-colors ${
         active
-          ? 'text-zinc-100 bg-zinc-700'
-          : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/50'
+          ? 'text-sidebar-accent-foreground bg-sidebar-accent'
+          : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50'
       }`}
     >
       {icon}

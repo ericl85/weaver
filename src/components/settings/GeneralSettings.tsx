@@ -32,11 +32,11 @@ export default function GeneralSettings() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-100 mb-4">General</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">General</h2>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-300" htmlFor="project-title">
+            <label className="text-xs font-medium text-foreground" htmlFor="project-title">
               Project Title
             </label>
             <input
@@ -44,16 +44,16 @@ export default function GeneralSettings() {
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="h-8 rounded-md bg-zinc-800 border border-zinc-600 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="h-8 rounded-md bg-card border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="Untitled Project"
             />
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               Changing the title does not rename the project folder on disk.
             </p>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-300" htmlFor="project-author">
+            <label className="text-xs font-medium text-foreground" htmlFor="project-author">
               Author
             </label>
             <input
@@ -61,7 +61,7 @@ export default function GeneralSettings() {
               type="text"
               value={author}
               onChange={e => setAuthor(e.target.value)}
-              className="h-8 rounded-md bg-zinc-800 border border-zinc-600 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="h-8 rounded-md bg-card border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="Author name"
             />
           </div>

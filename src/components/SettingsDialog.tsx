@@ -26,14 +26,14 @@ function NavItem({ label, active, disabled, hint, onClick }: NavItemProps) {
       title={hint}
       className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors focus:outline-none ${
         disabled
-          ? 'text-zinc-600 cursor-default'
+          ? 'text-muted-foreground/50 cursor-default'
           : active
-            ? 'bg-zinc-700 text-zinc-100'
-            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:text-foreground hover:bg-card'
       }`}
     >
       {label}
-      {hint && <span className="ml-2 text-xs text-zinc-600">({hint})</span>}
+      {hint && <span className="ml-2 text-xs text-muted-foreground">({hint})</span>}
     </button>
   );
 }
@@ -54,8 +54,8 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left nav */}
-          <div className="w-44 shrink-0 bg-zinc-800 border-r border-zinc-700 flex flex-col p-3 gap-0.5">
-            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-3 py-1 mb-1">
+          <div className="w-44 shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col p-3 gap-0.5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 mb-1">
               Settings
             </p>
             <NavItem
@@ -73,7 +73,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               active={section === 'categories'}
               onClick={() => setSection('categories')}
             />
-            <div className="my-2 border-t border-zinc-700" />
+            <div className="my-2 border-t border-border" />
             <NavItem
               label="Theme"
               active={section === 'theme'}
@@ -104,8 +104,8 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
             {section === 'categories' && <CategorySettings />}
             {section === 'theme' && (
               <div className="flex flex-col gap-2">
-                <h2 className="text-sm font-semibold text-zinc-100">Theme</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-sm font-semibold text-foreground">Theme</h2>
+                <p className="text-sm text-muted-foreground">
                   Theme customisation is coming soon. Use the Theme panel in the
                   right sidebar once it ships.
                 </p>

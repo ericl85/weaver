@@ -92,7 +92,7 @@ function SortableChapterItem({
             onChange={(e) => onRenameChange(e.target.value)}
             onBlur={onRenameSubmit}
             onKeyDown={(e) => { if (e.key === 'Escape') onRenameCancel(); }}
-            className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-sm text-zinc-100 focus:outline-none"
+            className="w-full bg-secondary border border-border rounded px-2 py-0.5 text-sm text-foreground focus:outline-none"
           />
         </form>
       ) : (
@@ -100,8 +100,8 @@ function SortableChapterItem({
           onClick={onSelect}
           className={`w-full text-left px-3 py-1.5 text-sm truncate pr-20 ${
             isActive
-              ? 'bg-zinc-700 text-zinc-100'
-              : 'text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100'
+              ? 'bg-accent text-accent-foreground'
+              : 'text-foreground hover:bg-accent/50 hover:text-accent-foreground'
           }`}
         >
           {chapter.title}
@@ -111,7 +111,7 @@ function SortableChapterItem({
       {/* Word count (hidden on hover) */}
       {!isRenaming && wordCount !== undefined && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex group-hover:hidden">
-          <span className="text-zinc-600 text-xs">{wordCount}</span>
+          <span className="text-muted-foreground text-xs">{wordCount}</span>
         </div>
       )}
 
@@ -122,21 +122,21 @@ function SortableChapterItem({
             {...attributes}
             {...listeners}
             title="Drag to reorder"
-            className="text-zinc-500 hover:text-zinc-200 text-xs px-0.5 cursor-grab active:cursor-grabbing"
+            className="text-muted-foreground hover:text-foreground text-xs px-0.5 cursor-grab active:cursor-grabbing"
           >
             ⠿
           </button>
           <button
             onClick={onStartRename}
             title="Rename"
-            className="text-zinc-500 hover:text-zinc-200 text-xs px-0.5"
+            className="text-muted-foreground hover:text-foreground text-xs px-0.5"
           >
             ✎
           </button>
           <button
             onClick={onDeleteRequest}
             title="Delete"
-            className="text-zinc-500 hover:text-red-400 text-xs px-0.5"
+            className="text-muted-foreground hover:text-destructive text-xs px-0.5"
           >
             ✕
           </button>
@@ -233,11 +233,11 @@ export default function ChapterList({ onChapterClick }: Props) {
     <div className="flex flex-col flex-1 overflow-y-auto">
       {/* Chapters header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
-        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Chapters</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Chapters</span>
         <button
           onClick={() => { setCreatingNew(true); setNewTitle(''); }}
           title="New chapter"
-          className="text-zinc-400 hover:text-zinc-100 text-lg leading-none px-1"
+          className="text-muted-foreground hover:text-foreground text-lg leading-none px-1"
         >
           +
         </button>
@@ -279,31 +279,31 @@ export default function ChapterList({ onChapterClick }: Props) {
             onBlur={() => { if (!newTitle.trim()) { setCreatingNew(false); } }}
             onKeyDown={(e) => { if (e.key === 'Escape') { setCreatingNew(false); setNewTitle(''); } }}
             placeholder="Chapter title…"
-            className="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
+            className="w-full bg-secondary border border-border rounded px-2 py-0.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </form>
       )}
 
       {/* Codex section */}
       {codexEntries.length > 0 && (
-        <div className="mt-3 border-t border-zinc-700">
+        <div className="mt-3 border-t border-border">
           <button
             onClick={() => setCodexOpen((o) => !o)}
             className="flex items-center gap-1 w-full px-3 pt-3 pb-1 text-left"
           >
-            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Codex</span>
-            <span className="text-zinc-500 text-xs ml-auto">{codexOpen ? '▴' : '▾'}</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Codex</span>
+            <span className="text-muted-foreground text-xs ml-auto">{codexOpen ? '▴' : '▾'}</span>
           </button>
 
           {codexOpen && (
             <ul className="flex flex-col">
               {Object.entries(codexByCategory).map(([category, entries]) => (
                 <li key={category}>
-                  <div className="px-3 py-1 text-xs text-zinc-500 capitalize">{category}</div>
+                  <div className="px-3 py-1 text-xs text-muted-foreground capitalize">{category}</div>
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
-                      className="px-5 py-1 text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer truncate"
+                      className="px-5 py-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer truncate"
                     >
                       {entry.title}
                     </div>
@@ -325,7 +325,7 @@ export default function ChapterList({ onChapterClick }: Props) {
             <AlertDialogTitle>Delete chapter?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete{' '}
-              <span className="font-semibold text-zinc-100">{pendingDelete?.title}</span>{' '}
+              <span className="font-semibold text-foreground">{pendingDelete?.title}</span>{' '}
               and its stickies. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

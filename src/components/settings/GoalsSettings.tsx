@@ -44,11 +44,11 @@ export default function GoalsSettings() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-100 mb-4">Goals</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Goals</h2>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-300" htmlFor="project-word-count">
+            <label className="text-xs font-medium text-foreground" htmlFor="project-word-count">
               Project Word Count
             </label>
             <input
@@ -59,13 +59,13 @@ export default function GoalsSettings() {
               step="1"
               value={projectWordCount}
               onChange={e => setProjectWordCount(e.target.value)}
-              className="h-8 rounded-md bg-zinc-800 border border-zinc-600 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="h-8 rounded-md bg-card border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="e.g. 90,000"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-zinc-300" htmlFor="daily-word-count">
+            <label className="text-xs font-medium text-foreground" htmlFor="daily-word-count">
               Daily Word Count
             </label>
             <input
@@ -76,15 +76,15 @@ export default function GoalsSettings() {
               step="1"
               value={dailyWordCount}
               onChange={e => setDailyWordCount(e.target.value)}
-              className="h-8 rounded-md bg-zinc-800 border border-zinc-600 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="h-8 rounded-md bg-card border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="e.g. 1,000"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between h-8 px-3 rounded-md border border-zinc-700 bg-zinc-800/50">
-              <span className="text-sm text-zinc-600">Deadline</span>
-              <span className="text-xs text-zinc-600">(coming soon)</span>
+            <div className="flex items-center justify-between h-8 px-3 rounded-md border border-border bg-card/50">
+              <span className="text-sm text-muted-foreground">Deadline</span>
+              <span className="text-xs text-muted-foreground">(coming soon)</span>
             </div>
           </div>
         </div>
