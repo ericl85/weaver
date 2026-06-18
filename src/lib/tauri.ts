@@ -7,6 +7,7 @@ import type {
   Sticky,
   StickyCategory,
   Stats,
+  ThemeManifest,
 } from '../types';
 
 // --- Project ---
@@ -207,4 +208,25 @@ export function updateGoals(
   goals: { projectWordCount?: number; dailyWordCount?: number },
 ): Promise<Project> {
   return invoke('update_goals', { projectPath, goals });
+}
+
+// --- Themes ---
+
+export function listThemes(projectPath: string): Promise<ThemeManifest[]> {
+  return invoke('list_themes', { projectPath });
+}
+
+export function readThemeCss(projectPath: string, name: string): Promise<string> {
+  return invoke('read_theme_css', { projectPath, name });
+}
+
+export function getActiveTheme(projectPath: string): Promise<string | null> {
+  return invoke('get_active_theme', { projectPath });
+}
+
+export function setActiveTheme(
+  projectPath: string,
+  name: string | null,
+): Promise<void> {
+  return invoke('set_active_theme', { projectPath, name });
 }

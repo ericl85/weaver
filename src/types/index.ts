@@ -67,13 +67,9 @@ export interface FileEntry {
   isDir: boolean;
 }
 
-export interface Theme {
+export interface ThemeManifest {
   name: string;
-  fontFamily: string;
-  fontSize: number;
-  lineHeight: number;
-  backgroundColor: string;
-  textColor: string;
-  accentColor: string;
-  textAlign: 'left' | 'justify';
+  version: string;
+  author: string;
+  modes: string[];
 }
