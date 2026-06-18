@@ -1,3 +1,19 @@
+// Injects an active theme's raw CSS into a single <style id="weaver-active-theme">
+// element in <head>. Because chrome and editor surfaces read CSS variables, this
+// one injection restyles the whole app live — no remount. Passing null empties the
+// element, falling back to the built-in Default tokens shipped in :root.
+const ACTIVE_THEME_STYLE_ID = 'weaver-active-theme';
+
+export function injectThemeCss(css: string | null): void {
+  let el = document.getElementById(ACTIVE_THEME_STYLE_ID) as HTMLStyleElement | null;
+  if (!el) {
+    el = document.createElement('style');
+    el.id = ACTIVE_THEME_STYLE_ID;
+    document.head.appendChild(el);
+  }
+  el.textContent = css ?? '';
+}
+
 // Lexical theme: maps node types to CSS class names.
 // Color/font/size come from --editor-* CSS variable classes (editor-*).
 // Structural utilities (spacing, indents, bullets) stay as Tailwind classes.

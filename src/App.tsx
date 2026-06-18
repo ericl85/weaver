@@ -144,9 +144,9 @@ function AppShell() {
 export default function App() {
   return (
     <SettingsProvider>
-      <ThemeProvider>
-        <WordCountProvider>
-          <ProjectProvider>
+      <WordCountProvider>
+        <ProjectProvider>
+          <ThemeProvider>
             <StatsProvider>
               <EditorProvider>
                 <StickyProvider>
@@ -156,9 +156,9 @@ export default function App() {
                 </StickyProvider>
               </EditorProvider>
             </StatsProvider>
-          </ProjectProvider>
-        </WordCountProvider>
-      </ThemeProvider>
+          </ThemeProvider>
+        </ProjectProvider>
+      </WordCountProvider>
     </SettingsProvider>
   );
 }

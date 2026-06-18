@@ -49,13 +49,23 @@ pub fn list_themes(project_path: String) -> Result<Vec<ThemeManifest>, String> {
         if !path.is_dir() {
             continue;
         }
+        let folder_name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
         let manifest_path = path.join("manifest.json");
         let content = match fs::read_to_string(&manifest_path) {
             Ok(c) => c,
             Err(_) => continue,
         };
         match serde_json::from_str::<ThemeManifest>(&content) {
-            Ok(manifest) => manifests.push(manifest),
+            Ok(mut manifest) => {
+                // The folder is the addressable unit (used by read_theme_css /
+                // set_active_theme), so the returned name is always the folder
+                // name regardless of what the manifest's own name field says.
+                manifest.name = folder_name;
+                manifests.push(manifest);
+            }
             Err(_) => continue,
         }
     }

@@ -106,8 +106,8 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               <div className="flex flex-col gap-2">
                 <h2 className="text-sm font-semibold text-foreground">Theme</h2>
                 <p className="text-sm text-muted-foreground">
-                  Theme customisation is coming soon. Use the Theme panel in the
-                  right sidebar once it ships.
+                  Themes are managed from the Themes panel in the right sidebar —
+                  open it to switch the active theme or install new ones.
                 </p>
               </div>
             )}
