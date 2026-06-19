@@ -44,10 +44,12 @@ function manifestMeta(m: ThemeManifest): string | undefined {
   return parts.length ? parts.join(' · ') : undefined;
 }
 
-export default function ThemePanel() {
+export default function ThemeSettings() {
   const { project } = useProject();
   const { activeTheme, themes, error, setActiveTheme, refreshThemes } = useTheme();
   const [busy, setBusy] = useState(false);
+
+  if (!project) return null;
 
   async function apply(name: string | null) {
     setBusy(true);
@@ -59,56 +61,59 @@ export default function ThemePanel() {
   }
 
   async function openThemesFolder() {
-    if (!project) return;
     try {
-      await revealItemInDir(`${project.rootPath}/.weaver/themes`);
+      await revealItemInDir(`${project!.rootPath}/.weaver/themes`);
     } catch (e) {
       console.error('Failed to open themes folder:', e);
     }
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
+    <div className="flex flex-col gap-5">
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-4">Theme</h2>
+
         {error && (
-          <p className="mx-1 mb-1 px-2 py-1.5 rounded text-xs bg-destructive/15 text-destructive">
+          <p className="mb-3 px-3 py-2 rounded text-xs bg-destructive/15 text-destructive">
             {error}
           </p>
         )}
 
-        {/* Built-in Default — always available, selecting it clears the override */}
-        <ThemeRow
-          name="Default"
-          meta="Built-in"
-          active={activeTheme === null}
-          onClick={() => apply(null)}
-        />
-
-        {themes.map((t) => (
+        <div className="flex flex-col gap-0.5">
           <ThemeRow
-            key={t.name}
-            name={t.name}
-            meta={manifestMeta(t)}
-            active={activeTheme === t.name}
-            onClick={() => apply(t.name)}
+            name="Default"
+            meta="Built-in"
+            active={activeTheme === null}
+            onClick={() => apply(null)}
           />
-        ))}
 
-        {themes.length === 0 && (
-          <p className="mt-3 px-3 text-xs text-muted-foreground leading-relaxed">
-            No themes installed. Themes are CSS files at{' '}
-            <code className="text-foreground">.weaver/themes/&lt;Name&gt;/theme.css</code>.
-            Add one, then reload.
-          </p>
-        )}
+          {themes.map((t) => (
+            <ThemeRow
+              key={t.name}
+              name={t.name}
+              meta={manifestMeta(t)}
+              active={activeTheme === t.name}
+              onClick={() => apply(t.name)}
+            />
+          ))}
+
+          {themes.length === 0 && (
+            <p className="mt-3 px-3 text-xs text-muted-foreground leading-relaxed">
+              No themes installed. Themes are CSS files at{' '}
+              <code className="text-foreground">.weaver/themes/&lt;Name&gt;/theme.css</code>.
+              Add one, then reload.
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="shrink-0 border-t border-sidebar-border p-2 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
           disabled={busy}
           onClick={() => refreshThemes()}
+          className="h-8 text-xs"
         >
           Reload themes
         </Button>
@@ -116,6 +121,7 @@ export default function ThemePanel() {
           variant="ghost"
           size="sm"
           onClick={openThemesFolder}
+          className="h-8 text-xs"
         >
           Open themes folder
         </Button>

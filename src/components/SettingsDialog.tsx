@@ -7,6 +7,7 @@ import {
 import GeneralSettings from './settings/GeneralSettings';
 import CategorySettings from './settings/CategorySettings';
 import GoalsSettings from './settings/GoalsSettings';
+import ThemeSettings from './settings/ThemeSettings';
 
 type Section = 'general' | 'goals' | 'categories' | 'theme' | 'codex' | 'ai';
 
@@ -73,14 +74,12 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               active={section === 'categories'}
               onClick={() => setSection('categories')}
             />
-            <div className="my-2 border-t border-border" />
             <NavItem
               label="Theme"
               active={section === 'theme'}
-              disabled
-              hint="coming soon"
-              onClick={() => {}}
+              onClick={() => setSection('theme')}
             />
+            <div className="my-2 border-t border-border" />
             <NavItem
               label="Codex"
               active={section === 'codex'}
@@ -102,15 +101,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
             {section === 'general' && <GeneralSettings />}
             {section === 'goals' && <GoalsSettings />}
             {section === 'categories' && <CategorySettings />}
-            {section === 'theme' && (
-              <div className="flex flex-col gap-2">
-                <h2 className="text-sm font-semibold text-foreground">Theme</h2>
-                <p className="text-sm text-muted-foreground">
-                  Themes are managed from the Themes panel in the right sidebar —
-                  open it to switch the active theme or install new ones.
-                </p>
-              </div>
-            )}
+            {section === 'theme' && <ThemeSettings />}
           </div>
         </div>
       </DialogContent>

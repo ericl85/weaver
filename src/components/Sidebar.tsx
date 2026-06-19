@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import SidebarIcon from './SidebarIcon';
 import StickyPanel from './panels/StickyPanel';
-import ThemePanel from './panels/ThemePanel';
 
-type PanelId = 'stickies' | 'codex' | 'ai' | 'theme';
+type PanelId = 'stickies' | 'codex' | 'ai';
 
 const PANEL_LABELS: Record<PanelId, string> = {
   stickies: 'Sticky Notes',
   codex: 'Codex',
   ai: 'AI Assistant',
-  theme: 'Themes',
 };
 
 // Minimal SVG icons (24×24 viewBox, stroke-based)
@@ -33,28 +31,16 @@ const AIIcon = () => (
   </svg>
 );
 
-const ThemeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor" />
-    <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor" />
-    <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor" />
-    <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor" />
-    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996C18.984 15.668 22 12.652 22 9c0-3.877-4.5-7-10-7z" />
-  </svg>
-);
-
 const PANEL_ICONS: Record<PanelId, React.ReactNode> = {
   stickies: <StickyNoteIcon />,
   codex: <CodexIcon />,
   ai: <AIIcon />,
-  theme: <ThemeIcon />,
 };
 
-const PANELS: PanelId[] = ['stickies', 'codex', 'ai', 'theme'];
+const PANELS: PanelId[] = ['stickies', 'codex', 'ai'];
 
 function PanelContent({ panel }: { panel: PanelId }) {
   if (panel === 'stickies') return <StickyPanel />;
-  if (panel === 'theme') return <ThemePanel />;
   return (
     <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
       {PANEL_LABELS[panel]} — coming soon
