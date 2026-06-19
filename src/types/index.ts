@@ -60,6 +60,13 @@ export interface CodexEntry {
   title: string;
   category: string;
   filename: string;
+  aliases: string[];
+  matchCase: boolean;
+}
+
+export interface ReadCodexResult {
+  entry: CodexEntry;
+  content: string;
 }
 
 export interface FileEntry {

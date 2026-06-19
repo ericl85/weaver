@@ -3,6 +3,7 @@ import type {
   Project,
   Chapter,
   CodexEntry,
+  ReadCodexResult,
   FileEntry,
   Sticky,
   StickyCategory,
@@ -93,7 +94,7 @@ export function readCodexEntry(
   projectPath: string,
   category: string,
   filename: string,
-): Promise<string> {
+): Promise<ReadCodexResult> {
   return invoke('read_codex_entry', { projectPath, category, filename });
 }
 
@@ -102,8 +103,10 @@ export function saveCodexEntry(
   category: string,
   filename: string,
   content: string,
+  aliases: string[],
+  matchCase: boolean,
 ): Promise<void> {
-  return invoke('save_codex_entry', { projectPath, category, filename, content });
+  return invoke('save_codex_entry', { projectPath, category, filename, content, aliases, matchCase });
 }
 
 export function createCodexEntry(
