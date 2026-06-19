@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="140" data-dc-tpl="15" viewBox="0 0 120 120" style="width: 140px; height: 140px; display: block; filter: drop-shadow(rgba(27, 36, 64, 0.14) 0px 8px 20px);">
+        <rect data-dc-tpl="16" x="0" y="0" width="120" height="120" rx="28" fill="#1B2440"></rect>
+        <rect data-dc-tpl="17" x="0.75" y="0.75" width="118.5" height="118.5" rx="27.25" fill="none" stroke="rgba(0,0,0,0.06)"></rect>
+        <g data-dc-tpl="18" stroke-linecap="round">
+          <line data-dc-tpl="19" x1="42" y1="34" x2="42" y2="86" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="20" x1="60" y1="34" x2="60" y2="86" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="21" x1="78" y1="34" x2="78" y2="86" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="22" x1="34" y1="42" x2="86" y2="42" stroke="#c7a052" stroke-width="10"></line>
+          <line data-dc-tpl="23" x1="34" y1="60" x2="86" y2="60" stroke="#c7a052" stroke-width="10"></line>
+          <line data-dc-tpl="24" x1="34" y1="78" x2="86" y2="78" stroke="#c7a052" stroke-width="10"></line>
+          <line data-dc-tpl="25" x1="42" y1="33" x2="42" y2="51" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="26" x1="42" y1="69" x2="42" y2="87" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="27" x1="60" y1="51" x2="60" y2="69" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="28" x1="78" y1="33" x2="78" y2="51" stroke="#FAF7F0" stroke-width="10"></line>
+          <line data-dc-tpl="29" x1="78" y1="69" x2="78" y2="87" stroke="#FAF7F0" stroke-width="10"></line>
+        </g>
+      </svg>
