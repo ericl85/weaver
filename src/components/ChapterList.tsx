@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useProject } from '../contexts/ProjectContext';
+import { useCodex } from '../contexts/CodexContext';
 import { useWordCount } from '../contexts/WordCountContext';
 import type { Chapter, CodexEntry } from '../types';
 import {
@@ -148,6 +149,7 @@ function SortableChapterItem({
 
 export default function ChapterList({ onChapterClick }: Props) {
   const { project, chapters, activeChapter, setActiveChapter, refreshChapters } = useProject();
+  const { activeCodexEntry, openCodexEntry } = useCodex();
   const { wordCounts } = useWordCount();
 
   const [codexEntries, setCodexEntries] = useState<CodexEntry[]>([]);
@@ -301,12 +303,17 @@ export default function ChapterList({ onChapterClick }: Props) {
                 <li key={category}>
                   <div className="px-3 py-1 text-xs text-muted-foreground capitalize">{category}</div>
                   {entries.map((entry) => (
-                    <div
+                    <button
                       key={entry.id}
-                      className="px-5 py-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer truncate"
+                      onClick={() => openCodexEntry(entry)}
+                      className={`block w-full text-left px-5 py-1 text-sm truncate ${
+                        activeCodexEntry?.id === entry.id
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                     >
                       {entry.title}
-                    </div>
+                    </button>
                   ))}
                 </li>
               ))}

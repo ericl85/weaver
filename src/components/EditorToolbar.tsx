@@ -47,7 +47,12 @@ function Sep() {
   return <div className="w-px h-4 bg-border mx-1 shrink-0" />;
 }
 
-export default function EditorToolbar() {
+interface EditorToolbarProps {
+  /** Show the sticky-badge visibility toggle. Off for non-chapter surfaces (e.g. codex notes). */
+  showStickyToggle?: boolean;
+}
+
+export default function EditorToolbar({ showStickyToggle = true }: EditorToolbarProps) {
   const [editor] = useLexicalComposerContext();
   const { badgesVisible, setBadgesVisible } = useStickyContext();
   const [fmt, setFmt] = useState<FormatState>({
@@ -252,19 +257,23 @@ export default function EditorToolbar() {
         ―
       </button>
 
-      <Sep />
+      {showStickyToggle && (
+        <>
+          <Sep />
 
-      {/* Stickies visibility toggle */}
-      <Toggle
-        size="sm"
-        pressed={badgesVisible}
-        onPressedChange={setBadgesVisible}
-        title={badgesVisible ? 'Hide sticky badges' : 'Show sticky badges'}
-        aria-label="Toggle sticky badges"
-        className="text-muted-foreground data-[state=on]:text-foreground"
-      >
-        <span className="text-[11px]">📌</span>
-      </Toggle>
+          {/* Stickies visibility toggle */}
+          <Toggle
+            size="sm"
+            pressed={badgesVisible}
+            onPressedChange={setBadgesVisible}
+            title={badgesVisible ? 'Hide sticky badges' : 'Show sticky badges'}
+            aria-label="Toggle sticky badges"
+            className="text-muted-foreground data-[state=on]:text-foreground"
+          >
+            <span className="text-[11px]">📌</span>
+          </Toggle>
+        </>
+      )}
     </div>
   );
 }

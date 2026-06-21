@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SidebarIcon from './SidebarIcon';
 import StickyPanel from './panels/StickyPanel';
+import CodexPanel from './panels/CodexPanel';
+import { useCodex } from '../contexts/CodexContext';
 
 type PanelId = 'stickies' | 'codex' | 'ai';
 
@@ -41,6 +43,7 @@ const PANELS: PanelId[] = ['stickies', 'codex', 'ai'];
 
 function PanelContent({ panel }: { panel: PanelId }) {
   if (panel === 'stickies') return <StickyPanel />;
+  if (panel === 'codex') return <CodexPanel />;
   return (
     <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
       {PANEL_LABELS[panel]} — coming soon
@@ -50,6 +53,13 @@ function PanelContent({ panel }: { panel: PanelId }) {
 
 export default function Sidebar() {
   const [activePanel, setActivePanel] = useState<PanelId | null>(null);
+  const { activeCodexEntry } = useCodex();
+
+  // When a codex profile owns the center pane, the right tool-sidebar is
+  // chapter-context and irrelevant — yield to the icon strip.
+  useEffect(() => {
+    if (activeCodexEntry) setActivePanel(null);
+  }, [activeCodexEntry]);
 
   function toggle(panel: PanelId) {
     setActivePanel(p => (p === panel ? null : panel));
