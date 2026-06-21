@@ -22,6 +22,7 @@ import { StickyAnchorNode } from "./nodes/StickyAnchorNode";
 import { useEditor } from "./contexts/EditorContext";
 import StickyDndBridgePlugin from "./plugins/StickyDndBridgePlugin";
 import ScrollSyncPlugin from "./plugins/ScrollSyncPlugin";
+import JumpPlugin from "./plugins/JumpPlugin";
 import {
   markdownToEditorState,
   editorStateToMarkdown,
@@ -154,6 +155,7 @@ export default function Editor({
         <EditorRefPlugin />
         <StickyDndBridgePlugin dropzoneId={dropzoneId} />
         <ScrollSyncPlugin visible={visible} dropzoneId={dropzoneId} />
+        {filename && <JumpPlugin filename={filename} visible={visible} />}
       </div>
     </LexicalComposer>
   );

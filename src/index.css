@@ -208,3 +208,16 @@ body {
 }
 
 .editor-hr { border-color: var(--editor-quote-border); }
+
+/* Jump-to-occurrence flash: brief amber background that fades. Passive —
+   nothing is written to disk, no marker persists. */
+@keyframes weaver-jump-flash {
+  0%   { background-color: oklch(0.78 0.15 65 / 0.35); }
+  70%  { background-color: oklch(0.78 0.15 65 / 0.20); }
+  100% { background-color: transparent; }
+}
+
+.weaver-jump-flash {
+  animation: weaver-jump-flash 1.2s ease-out forwards;
+  border-radius: 2px;
+}
