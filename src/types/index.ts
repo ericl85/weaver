@@ -74,6 +74,19 @@ export interface FileEntry {
   isDir: boolean;
 }
 
+export interface Occurrence {
+  ordinal: number;
+  matchedAlias: string;
+  snippet: string;
+  snippetMatchStart: number;
+  snippetMatchLen: number;
+}
+
+export interface ReferenceHit {
+  chapter: string;
+  occurrences: Occurrence[];
+}
+
 export interface ThemeManifest {
   name: string;
   version: string;

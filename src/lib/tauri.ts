@@ -5,11 +5,15 @@ import type {
   CodexEntry,
   ReadCodexResult,
   FileEntry,
+  Occurrence,
+  ReferenceHit,
   Sticky,
   StickyCategory,
   Stats,
   ThemeManifest,
 } from '../types';
+
+export type { Occurrence, ReferenceHit };
 
 // --- Project ---
 
@@ -232,4 +236,22 @@ export function setActiveTheme(
   name: string | null,
 ): Promise<void> {
   return invoke('set_active_theme', { projectPath, name });
+}
+
+// --- Search ---
+
+export function findReferences(
+  rootPath: string,
+  aliases: string[],
+  matchCase: boolean,
+): Promise<ReferenceHit[]> {
+  return invoke('find_references', { rootPath, aliases, matchCase });
+}
+
+export function searchText(
+  rootPath: string,
+  query: string,
+  matchCase: boolean,
+): Promise<ReferenceHit[]> {
+  return invoke('search_text', { rootPath, query, matchCase });
 }

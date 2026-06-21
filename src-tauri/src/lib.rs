@@ -5,6 +5,7 @@ mod codex;
 mod menu;
 mod project;
 mod raw_files;
+mod search;
 mod stats;
 mod stickies;
 mod themes;
@@ -16,6 +17,7 @@ use project::{create_project, open_project, update_goals, update_project_metadat
 use stats::{count_project_words, mark_celebrated, read_stats, update_daily_progress};
 use raw_files::{list_project_files, read_raw_file, save_raw_file};
 use stickies::{add_category, delete_category, delete_sticky, list_categories, read_stickies, save_stickies, update_category};
+use search::{find_references, search_text};
 use themes::{get_active_theme, list_themes, read_theme_css, set_active_theme};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -50,6 +52,7 @@ pub fn run() {
             delete_chapter,
             delete_codex_entry,
             delete_sticky,
+            find_references,
             get_active_theme,
             list_categories,
             list_chapters,
@@ -70,6 +73,7 @@ pub fn run() {
             save_codex_entry,
             save_raw_file,
             save_stickies,
+            search_text,
             set_active_theme,
             update_category,
             update_daily_progress,
